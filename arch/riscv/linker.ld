@@ -11,6 +11,7 @@ MEMORY
 SECTIONS
 {
   .text : {
+    KEEP(*(.text.start))
     *(.text*)
   } > ROM
 
