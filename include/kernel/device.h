@@ -19,7 +19,7 @@ struct device_driver {
 
 struct device_ops {
     uint32_t (*read)(struct device* dev, void* buffer, uint32_t count, uint32_t offset);
-    uint32_t (*write)(struct device* dev, void* buffer, uint32_t count, uint32_t offset);
+    uint32_t (*write)(struct device* dev, const void* buffer, uint32_t count, uint32_t offset);
     int (*ioctl)(struct device* dev, int cmd, void* arg);
 };
 
