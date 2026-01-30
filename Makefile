@@ -24,7 +24,7 @@ LNKP ?=
 
 MN_FILE ?= main.elf
 
-CFLAGS ?= -march=rv32i -mabi=ilp32 -fno-pic -fno-pie -ffreestanding -Os -Wall -Wextra $(INCL)
+CFLAGS ?= -march=rv32i -mabi=ilp32 -fno-pic -fno-pie -ffreestanding -Os -Wall -Wextra -Wno-unused-parameter $(INCL)
 
 LDFLAGS ?= -nostdlib -nostartfiles -static -march=rv32i -mabi=ilp32 -Os
 
