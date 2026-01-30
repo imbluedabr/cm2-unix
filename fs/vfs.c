@@ -98,7 +98,7 @@ int vfs_pwrite(int fd, const void* buffer, uint32_t count, uint32_t offset)
 
 }
 
-void vfs_mount(const char* mount, const char* dev_path, const void* arg)
+void vfs_mount(const char* mount, const char* dev_path, const char* name)
 {
 
 }
