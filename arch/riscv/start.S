@@ -1,4 +1,4 @@
-.section .text
+.section .text.start
 .extern main
 .global _start
 
