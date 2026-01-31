@@ -25,6 +25,7 @@ void gen_disk_init()
     gen_disk_driver->create = &gen_disk_create;
     gen_disk_driver->destroy = &gen_disk_destroy;
     gen_disk_driver->lookup = &gen_disk_lookup;
+    gen_disk_driver->update = &gen_disk_global_update;
     gen_disk_driver->name = "generic block device";
 }
 
@@ -64,7 +65,11 @@ struct device* gen_disk_lookup(uint8_t minor)
     return &disk0.base;
 }
 
-
+void gen_disk_global_update() {
+    if (disk0.base.ops != NULL) {
+        gen_disk_update(&disk0.base);
+    }
+}
 
 int gen_disk_ioctl(struct device* dev, int cmd, void* arg)
 {

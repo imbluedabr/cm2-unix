@@ -20,5 +20,5 @@ struct device* gen_disk_lookup(uint8_t minor);
 
 int gen_disk_ioctl(struct device* dev, int cmd, void* arg);
 void gen_disk_update(struct device* dev);
-
+void gen_disk_global_update();
 
