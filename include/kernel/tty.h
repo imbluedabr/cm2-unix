@@ -24,6 +24,8 @@ int tty_destroy(uint8_t minor);
 //lookup a tty insance
 struct device* tty_lookup(uint8_t minor);
 
+void tty_global_update();
+
 int tty_ioctl(struct device* dev, int cmd, void* arg);
 
 void tty_update(struct device* dev);

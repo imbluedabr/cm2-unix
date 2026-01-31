@@ -30,6 +30,7 @@ void tty_init() {
     tty_driver->create = &tty_create;
     tty_driver->destroy = &tty_destroy;
     tty_driver->lookup = &tty_lookup;
+    tty_driver->update = &tty_global_update;
     tty_driver->name = "generic tty";
 }
 
@@ -39,7 +40,7 @@ struct device* tty_create(int8_t* minor, const void* args)
     for (int8_t i = 0; i < MAX_TTY_COUNT; i++) {
         struct tty_device* tty = &tty_table[i];
         if (tty->base.ops == NULL) {
-            tty->base.ops = &tty_ops;
+            tty->base.ops = (struct device_ops*) &tty_ops;
             tty->tty = (struct tty_hardware_interface*) args;
             tty->base.count = 0; //init queue
             tty->base.head = 0;
@@ -69,6 +70,15 @@ struct device* tty_lookup(uint8_t minor)
         return NULL;
     }
     return &tty->base;
+}
+
+void tty_global_update() {
+    for (int i = 0; i < MAX_TTY_COUNT; i++) {
+        struct tty_device* tty = &tty_table[i];
+        if (tty->base.ops != NULL) {
+            tty_update(&tty->base);
+        }
+    }
 }
 
 int tty_ioctl(struct device* dev, int cmd, void* arg) {
