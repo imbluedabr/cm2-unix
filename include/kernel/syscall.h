@@ -33,6 +33,9 @@ void sys_chdir();
 void sys_chdir_update(struct proc* process);
 //void yield();
 void sys_yield();
+//pid_t exec(const char* path, const char** argv, int* fileno_vec)
+void sys_exec();
+void sys_exec_update(struct proc* process);
 //void exit(int error_code)
 void sys_exit();
 //int kill(pid_t upid)

@@ -249,6 +249,28 @@ void sys_yield()
     //yield does nothing lol
 }
 
+//pid_t exec(const char* path, const char** argv, int* fileno_vec);
+void sys_exec()
+{
+    int status = proc_exec(&current_process->exec_state, (const char*) syscall_args[1], (const char**) syscall_args[2], (int*) syscall_args[3]);
+    if (status < 0) {
+        current_process->return_value = -1;
+        return;
+    }
+
+    block_proc();
+}
+
+void sys_exec_update(struct proc* process)
+{
+    int status = proc_exec_update(&process->exec_state);
+    if (status != 0) {
+        proc_resume(process, status);
+    }
+}
+
+
+
 //void exit(int return_code)
 void sys_exit()
 {

@@ -2,7 +2,6 @@
 #include <kernel/proc.h>
 
 
-//pid_t exec(const char* path, const char** argv, int* fileno_vec);
-void sys_exec();
-void sys_exec_update(struct proc* process);
+int proc_exec(exe_t* exec_state, const char* path, const char** argv, int* fileno_vec);
+int proc_exec_update(exe_t* exec_state);
 
