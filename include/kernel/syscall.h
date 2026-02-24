@@ -40,10 +40,13 @@ void sys_kill();
 //int wait(pid_t upid)
 void sys_wait();
 void sys_wait_update(struct proc* process);
-//int mount(const char* dev_name, char* dir_name, char* type, )
+//int mount(const char* dev_path, const char* dir_path, const char* type)
 void sys_mount();
 void sys_mount_update(struct proc* process);
-//int sysctl(int cmd, void* buff);
+//int umount(const char* dir_path)
+void sys_umount();
+void sys_umount_update(struct proc* process);
+//int sysctl(int cmd, void* buff, int count);
 void sys_sysctl();
 
 //called from a thread, switches to kernel context

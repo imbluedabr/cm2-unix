@@ -29,6 +29,7 @@ void (*syscall_setup_table[])() = {
     &sys_kill,
     &sys_wait,
     &sys_mount,
+    &sys_umount,
     &sys_sysctl
 };
 
@@ -48,6 +49,7 @@ void (*syscall_update_table[])(struct proc* process) = {
     NULL,
     &sys_wait_update,
     &sys_mount_update,
+    &sys_umount_update,
     NULL
 };
 
@@ -95,7 +97,7 @@ void sys_open_update(struct proc* process)
         fd_p->flags = 0;
         fd_p->offset = 0;
         
-        uint8_t fdnum = proc_alloc_fd();
+        uint8_t fdnum = proc_alloc_fd(process);
         if (fdnum == PROC_FILE_NIL) { 
             proc_resume(process, -1);
             return;
@@ -164,13 +166,7 @@ void sys_write_update(struct proc* process)
 
 void sys_close()
 {
-    struct fd* descriptor = proc_get_fd(syscall_args[0]);
-    if (descriptor == NULL) {
-        return;
-    }
-    free_inode(descriptor->file);
-    descriptor->file = NULL;
-    current_process->open_files[syscall_args[0]] = PROC_FILE_NIL;
+    vfs_close(syscall_args[1]);
 }
 
 //int ioctl(int fd, int cmd, void* arg)
@@ -265,7 +261,10 @@ void sys_kill()
 {
     pid_t upid = syscall_args[1] & MAX_PROCESSES_MSK;
     struct proc* process = &process_table[upid];
-
+    if (process->state == UNALLOCATED) {
+        current_process->return_value = -1;
+        return;
+    }
     process->state = DEAD;
     current_process->return_value = 0;
 }
@@ -273,9 +272,13 @@ void sys_kill()
 //int wait(pid_t upid)
 void sys_wait()
 {
-    current_process->state = BLOCKED;
-    current_process->waitpid_state.target_pid = syscall_args[1];
-    current_process->syscall_state = SYSCALL_STATE_BEGIN;
+    if (PROC_ALIVE(syscall_args[1])) {
+        current_process->state = BLOCKED;
+        current_process->waitpid_state.target_pid = syscall_args[1];
+        current_process->syscall_state = SYSCALL_STATE_BEGIN;
+    } else {
+        current_process->return_value = -1;
+    }
 }
 
 void sys_wait_update(struct proc* process)
@@ -308,14 +311,18 @@ void sys_sysctl()
     void* buff = (void*) syscall_args[2];
     int count = syscall_args[3];
     if (cmd == 0) {
+        int count = 0;
         for (int i = 0; i < MAX_PROCESSES; i++) {
-            struct procinfo* pbuff =  &((struct procinfo*) buff)[i];
             struct proc* curr = &process_table[i];
-
-            pbuff->state = curr->state;
-            pbuff->upid = curr->pid;
+            if (PROC_ALIVE(curr->pid)) {
+                struct procinfo* pbuff = &((struct procinfo*) buff)[count++];
+                pbuff->state = curr->state;
+                pbuff->upid = curr->pid;
+                pbuff->program_base = curr->program_base;
+                pbuff->program_size = curr->program_size;
+            }
         }
-        current_process->return_value = 0;
+        current_process->return_value = count;
     } else if (cmd == 1) {
         char* ubuff = buff;
         strlcpy(ubuff, (char*) uname, count - 1);
