@@ -1,4 +1,5 @@
 #include <fs/vfs.h>
+#include <kernel/proc.h>
 #include <stddef.h>
 #include <lib/stdlib.h>
 #include <lib/kprint.h>
@@ -117,5 +118,16 @@ int8_t mount_update(vfs_mount_t* state)
     return 0;
 }
 
+
+void vfs_close(int fileno)
+{
+    struct fd* descriptor = proc_get_fd(fileno);
+    if (descriptor == NULL) {
+        return;
+    }
+    free_inode(descriptor->file);
+    descriptor->file = NULL;
+    current_process->open_files[fileno] = PROC_FILE_NIL;
+}
 
 

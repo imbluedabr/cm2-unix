@@ -50,8 +50,12 @@ void free_inode(struct inode* i)
     if (i->fs == NULL) {
         return;
     }
-    i->fs = NULL;
-    free_list[free_list_size++] = i - inode_table;
+    if (i->refcount != 0) {
+        i->refcount--;
+    } else {
+        i->fs = NULL;
+        free_list[free_list_size++] = i - inode_table;
+    }
 }
 
 

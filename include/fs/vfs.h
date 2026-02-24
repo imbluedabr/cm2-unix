@@ -24,6 +24,5 @@ int mount_root(const char* fs_name, dev_t devno);
 int mount_devfs(const char* fs_name);
 int8_t mount_init(vfs_mount_t* state, const char* path, const char* fs_name, dev_t devno);
 int8_t mount_update(vfs_mount_t* state);
-void vfs_close(struct fd* decsriptor);
-
+void vfs_close(int fileno);
 
