@@ -7,8 +7,10 @@ LIBC ?=
 
 CC = $(TOOLCHAIN)-gcc
 
-CFLAGS = -march=rv32i -mabi=ilp32 -Os -flto -ffreestanding -static -fpie -fpic -nostdlib -nostartfiles -I$(KERNEL_HEADERS) -I$(LIBC)
-LDFLAGS = -march=rv32i -mabi=ilp32 -Os -flto -ffreestanding -static -nostdlib -nostartfiles -T$(LIBC)/linker.ld $(LIBC)/*.o
+include $(LIBC)/base.mk
+
+CFLAGS = $(BASE_CFLAGS) -Os -flto -I$(KERNEL_HEADERS) -I$(LIBC)
+LDFLAGS = $(BASE_LDFLAGS) -Os -flto -T$(LIBC)/linker.ld $(LIBC)/*.o
 
 
 all: clean sh install
@@ -21,7 +23,7 @@ sh: sh.o
 	$(TOOLCHAIN)-objcopy -O binary sh.elf sh.bin
 
 install:
-	cp sh.bin $(STAGING)/bin/sh.bin
+	cp sh.bin $(STAGING)/bin/sh
 
 clean:
 	rm -rf sh.o sh.elf
