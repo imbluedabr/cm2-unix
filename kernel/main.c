@@ -7,6 +7,7 @@
 #include <kernel/tilegpu.h>
 #include <uapi/majors.h>
 #include <kernel/proc.h>
+#include <kernel/exec.h>
 #include <kernel/syscall.h>
 #include <kernel/panic.h>
 #include <kernel/globals.h>
@@ -14,8 +15,6 @@
 #include <fs/romfs.h>
 #include <fs/devfs.h>
 #include <fs/fatfs.h>
-
-#include <kernel/kshell.h>
 
 void main() {
     dev_t tty0_devno, gpu0_devno, disk0_devno;
@@ -56,8 +55,18 @@ void main() {
     devfs_create_handle("disk0", disk0_devno);
     kputs("populated devfs!\nstarting init...\n");
     
-    proc_create((uint32_t) &kshell_thread, (uint32_t) &kshell_thread_stack + KSHELL_STACK_SIZE, NULL, NULL);
-
+    //exec the init process
+    exe_t init;
+    proc_exec(&init, "/bin/sh", NULL, NULL);
+    int init_state = 0;
+    while(init_state == 0) {
+        init_state = proc_exec_update(&init);
+        device_update();
+    }
+    if (init_state < 0) {
+        panic("failed to load init process");
+    }
+    
     //bootstrap the scheduler by getting the first process to run
     current_process = proc_dequeue();
     exit_kernel(); //jump into the current process
