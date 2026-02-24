@@ -7,8 +7,9 @@ KERNEL_HEADERS ?=
 
 CC = $(TOOLCHAIN)-gcc
 
-CFLAGS = -march=rv32i -mabi=ilp32 -Os -flto -ffreestanding -static -fpie -fpic -nostdlib -nostartfiles -I$(KERNEL_HEADERS)
-LDFLAGS = -march=rv32i -mabi=ilp32 -Os -flto -ffreestanding -static -nostdlib -nostartfiles -Tlinker.ld
+include base.mk
+
+CFLAGS = $(BASE_CFLAGS) -Os -flto -I$(KERNEL_HEADERS)
 
 SRCS = $(wildcard *.c)
 OBJS = $(SRCS:%.c=%.o) start.o
