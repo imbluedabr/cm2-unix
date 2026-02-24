@@ -1,22 +1,31 @@
 #include <stdlib.h>
+#include <stdio.h>
 #include <vfs.h>
+#include <stddef.h>
 
 struct stat dirbuff[8];
+const char* ftypes = "dmfn";
 
-void main()
+void main(const char** argv)
 {
-    int fd = open("/dev/tty0", 0);
+    STDOUT = 0;
     
-    int dirfd = open("/", 0);
-    //int count = readdir(dirfd, dirbuff, 8);
-    write(fd, "Hello world!\nthe userspace is still in development!\n", 52);
-    /*
+    const char* path = "/";
+    if (argv[1] != NULL) {
+        path = argv[1];
+    }
+
+    int dirfd = open(path, 0);
+    int count = readdir(dirfd, dirbuff, 8);
+    
     for (int i = 0; i < count; i++) {
-        char buff[] = "            \n";
+        char buff[] = "x           xxxx\n";
         struct stat* dir = &dirbuff[i];
-        strncpy(buff, dir->name, FS_INAME_LEN);
-        write(fd, buff, 13);
-    }*/
+        buff[0] = ftypes[dir->mode];
+        int_to_hex(buff + 12, dir->size, 4);
+        strncpy(buff + 2, dir->name, FS_INAME_LEN);
+        write(STDOUT, buff, sizeof(buff) - 1);
+    }
 
     
     exit(0);
