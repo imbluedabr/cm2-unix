@@ -303,6 +303,15 @@ void sys_mount_update(struct proc* process)
 
 }
 
+void sys_umount()
+{
+
+}
+
+void sys_umount_update(struct proc* process)
+{
+
+}
 
 //int sysctl(int cmd, void* buff, int count)
 void sys_sysctl()
