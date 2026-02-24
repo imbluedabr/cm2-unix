@@ -1,6 +1,10 @@
 #include "stdlib.h"
+#include "stdio.h"
 
 #include <syscalls.h>
+#include <stdarg.h>
+
+uint8_t STDOUT;
 
 uint32_t strlen(const char* str)
 {
@@ -88,6 +92,17 @@ void int_to_hex(char* buff, uint16_t val, uint8_t numc)
     }
 }
 
+const char *u32_to_hex(uint32_t value) {
+    static const char lookup[] = "0123456789abcdef";
+    static char buf[9];
+    for (int i = 0; i < 8; i++) {
+        buf[7 - i] = lookup[value & 0xf];
+        value >>= 4;
+    }
+    buf[8] = '\0';
+    return buf;
+}
+
 
 int open(const char* path, uint32_t flags)
 {
@@ -124,9 +139,9 @@ int wait(pid_t upid)
     return SYSCALL(SYS_WAIT, upid, 0, 0);
 }
 
-pid_t exec(const char* path)
+int exec(const char* path, const char** argv, int* fileno_vec)
 {
-    return SYSCALL(SYS_EXEC, (uint32_t) path, 0, 0);
+    return SYSCALL(SYS_EXEC, (uint32_t) path, (uint32_t) argv, (uint32_t) fileno_vec);
 }
 
 int sysctl(int cmd, void* buff, int count)
@@ -137,6 +152,44 @@ int sysctl(int cmd, void* buff, int count)
 void yield()
 {
     SYSCALL(SYS_YIELD, 0, 0, 0);
+}
+
+void putc(char c)
+{
+    write(STDOUT, &c, 1);
+}
+
+void puts(const char *str)
+{
+    write(STDOUT, str, strlen(str));
+}
+
+void printf(const char *fmt, ...) 
+{
+    va_list params;
+    va_start(params, fmt);
+
+    while (*fmt != '\0') {
+        if (*fmt != '%') putc(*fmt);
+        else {
+            fmt++;
+
+            if (*fmt == 'c') {
+                char ch = va_arg(params, int);
+                putc(ch);
+            }
+            else if (*fmt == 's') {
+                char *s = va_arg(params, char *);
+                puts(s);
+            }
+            else if (*fmt == 'x') {
+                int num = va_arg(params, int);
+                char *hex = u32_to_hex(num);
+                puts(hex);
+            }
+        }
+        fmt++;
+    }
 }
 
 

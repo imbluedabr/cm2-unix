@@ -32,7 +32,7 @@ int ioctl(int fd, int cmd, void* arg);
 
 void exit(int exit_code);
 
-pid_t exec(const char* path);
+int exec(const char* path, const char** argv, int* fileno_vec);
 
 int wait(pid_t upid);
 
