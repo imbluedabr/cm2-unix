@@ -18,6 +18,7 @@ enum Syscalls {
     SYS_KILL,
     SYS_WAIT,
     SYS_MOUNT,
+    SYS_UMOUNT,
     SYS_SYSCTL
 };
 
