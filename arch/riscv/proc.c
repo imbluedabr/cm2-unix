@@ -2,6 +2,7 @@
 #include <kernel/device.h>
 #include <lib/stdlib.h>
 #include <lib/kprint.h>
+#include <lib/alloc.h>
 #include <kernel/syscall.h>
 #include <kernel/panic.h>
 #include <stddef.h>
@@ -62,7 +63,7 @@ void proc_init()
     }
 }
 
-struct proc* proc_create(uint32_t entry_point, uint32_t stack_pointer) {
+struct proc* proc_create(uint32_t entry_point, uint32_t stack_pointer, const char **argv, struct fd** file_vec) {
     
     uint8_t tmp = free_processes_count;
     if (tmp == 0) return NULL;
@@ -80,6 +81,29 @@ struct proc* proc_create(uint32_t entry_point, uint32_t stack_pointer) {
     new_process->program_base = 0;
     new_process->program_size = 0;
     
+    memset(new_process->open_files, PROC_FILE_NIL, PROC_MAXFILES);
+
+    if (file_vec != NULL) {
+        //pass the fd's to the new process
+        int file_vec_count = 0;
+        while(file_vec[file_vec_count] != NULL && file_vec_count < EXEC_MAX_PASSED_FD) {
+            struct fd* file = file_vec[file_vec_count++];
+            int new_fd_num = fd_alloc();
+            struct fd* file_cpy = &fd_table[new_fd_num];
+            file_cpy->file = file->file;
+            file->file->refcount++;
+            file_cpy->flags = file->flags;
+            file_cpy->offset = file->offset;
+            int new_fileno = proc_alloc_fd(new_process);
+            new_process->open_files[new_fileno] = new_fd_num;
+        }
+    }
+
+    if (argv != NULL) {
+        //TODO: actualy implement correct passing of argv and argc, not whatever this shit is
+        new_process->return_value = (uint32_t) argv;
+    }
+
     proc_enqueue(new_process);
     return new_process;
 }
@@ -88,6 +112,12 @@ void proc_delete(struct proc* process) {
     if (process->state == DEAD) {
         process->state = UNALLOCATED;
         free_processes[free_processes_count++] = process->pid;
+        
+        for (int i = 0; i < PROC_MAXFILES; i++) {
+            vfs_close(process->open_files[i]);
+        }
+
+        free((void*) process->program_base);
     }
 }
 
@@ -113,9 +143,9 @@ struct fd* proc_get_fd(int fd) {
     return descriptor;
 }
 
-uint8_t proc_alloc_fd() {
+uint8_t proc_alloc_fd(struct proc* process) {
     for (int i = 0; i < PROC_MAXFILES; i++) {
-        if (current_process->open_files[i] == PROC_FILE_NIL) {
+        if (process->open_files[i] == PROC_FILE_NIL) {
             return i;
         }
     }

@@ -25,10 +25,13 @@ typedef struct {
     fs_write_t fs;
 } vfs_write_t;
 
+#define EXEC_MAX_PASSED_FD 4
 typedef struct {
 	path_walk_t walker;
 	fs_read_t fs;
     struct fd descriptor;
+    const char** argv;
+    struct fd* file_buff[EXEC_MAX_PASSED_FD];
 } exe_t;
 
 #define SYSCALL_STATE_NIL 255
@@ -72,6 +75,10 @@ struct proc {
 #define MAX_PROCESSES_MSK (MAX_PROCESSES - 1)
 extern struct proc process_table[MAX_PROCESSES];
 
+//0 - 1 is blocked or ready, and 2 - 3 is dead or unallocated so if we check bit 0b10 we know if the process is alive or dead
+#define PROC_ALIVE(PID) ((process_table[PID & MAX_PROCESSES_MSK].state & 0b10) == 0)
+
+
 extern struct proc* current_process;
 
 extern uint32_t kernel_sp;
@@ -79,11 +86,11 @@ extern uint32_t kernel_sp;
 int proc_enqueue(struct proc* process);
 struct proc* proc_dequeue();
 void proc_init();
-struct proc* proc_create(uint32_t entry_point, uint32_t stack_pointer);
+struct proc* proc_create(uint32_t entry_point, uint32_t stack_pointer, const char** argv, struct fd** file_vec);
 void proc_delete(struct proc* process);
 void proc_resume(struct proc* process, int return_value);
 struct fd* proc_get_fd(int fd);
-uint8_t proc_alloc_fd();
+uint8_t proc_alloc_fd(struct proc* process);
 void proc_update();
 
 
