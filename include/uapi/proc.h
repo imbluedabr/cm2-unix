@@ -13,5 +13,7 @@ enum proc_state : uint8_t {
 struct procinfo {
     pid_t upid;
     enum proc_state state;
+    uint32_t program_base;
+    uint32_t program_size;
 };
 
