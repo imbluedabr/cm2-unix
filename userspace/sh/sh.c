@@ -31,15 +31,18 @@ int parse_args(char* buffer, int size)
     return argc;
 }
 
-const char* prompt = "# ";
+const char* prompt = "$ ";
+char cwd[FS_PATH_LEN + 1];
 
 void main()
 {
     tty0 = open("/dev/tty0", 0);
     STDOUT = tty0;
-
+    
     while(1) {
         memset(line_buffer, 0, LINE_SIZE);
+        getcwd(cwd, FS_PATH_LEN);
+        puts(cwd);
         puts(prompt);
 
         int count = read(tty0, line_buffer, LINE_SIZE);
@@ -53,6 +56,12 @@ void main()
             break;
         } else if (strncmp(argv[0], "clear", LINE_SIZE) == 0) {
             ioctl(tty0, TTY_IOCTL_CLEAR, NULL);
+        } else if (strncmp(argv[0], "cd", LINE_SIZE) == 0) {
+            if (argv[1] == NULL) {
+                puts("cd: missing argument\n");
+            } else if (chdir(argv[1]) < 0) {
+                puts("cd: path not found\n");
+            }
         } else {
             int fileno_vec[] = {
                 tty0,
@@ -60,11 +69,18 @@ void main()
             };
 
             //BUG: the return value is not converted to a pid_t(int8_t) properly, this happens somewhere in the kernel im guessing
-            int new = exec(line_buffer, (const char**) argv, fileno_vec);
+            int new;
+            int off = strncpy(cwd, "/bin/", 5);
+            strlcpy(cwd + off, argv[0], FS_INAME_LEN);
+            
+            new = exec(cwd, (const char**) argv, fileno_vec);
+            if (new == -1) { //if it wasnt found in /bin we look in the current working directory of the shell
+                new = exec(argv[0], (const char**) argv, fileno_vec);
+            }
             if (new == -1) {
                 printf("sh: %s: command not found\n", argv[0]);
             } else {
-                wait(new);
+                wait(new); //wait for the process to finish
             }
         }
         
