@@ -129,6 +129,17 @@ int ioctl(int fd, int cmd, void* arg)
     return SYSCALL(SYS_IOCTL, fd, cmd, (uint32_t) arg);
 }
 
+int getcwd(char* buff, int size)
+{
+    return SYSCALL(SYS_GETCWD, (uint32_t) buff, (uint32_t) size, 0);
+}
+
+int chdir(const char* path)
+{
+    return SYSCALL(SYS_CHDIR, (uint32_t) path, 0, 0);
+}
+
+
 void exit(int exit_code)
 {
     SYSCALL(SYS_EXIT, exit_code, 0, 0);

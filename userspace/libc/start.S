@@ -3,6 +3,7 @@
 .global _start
 
 .extern main
+.extern exit
 
 #magic
 .word 0xE85250D6
@@ -18,11 +19,10 @@
 .word _stack_top
 
 
-_start: 
-    jal x0, main
-
-loop:
-    jal x0, loop
+_start:
+    call main
+    #a0 is the return value of main which is also the argument register for exit
+    call exit
 
 
 

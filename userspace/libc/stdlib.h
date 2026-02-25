@@ -30,6 +30,10 @@ int readdir(int dirfd, struct stat* buffer, int count);
 
 int ioctl(int fd, int cmd, void* arg);
 
+int getcwd(char* buff, int size);
+
+int chdir(const char* path);
+
 void exit(int exit_code);
 
 int exec(const char* path, const char** argv, int* fileno_vec);
