@@ -12,7 +12,7 @@ include $(LIBC)/base.mk
 CFLAGS = $(BASE_CFLAGS) -Os -flto -I$(KERNEL_HEADERS) -I$(LIBC)
 LDFLAGS = $(BASE_LDFLAGS) -Os -flto -T$(LIBC)/linker.ld $(LIBC)/*.o
 
-all: clean ls cat ps install
+all: clean ls cat ps uname pwd install
 
 
 ls.o: ls.c
@@ -36,13 +36,28 @@ ps: ps.o
 	$(CC) $(LDFLAGS) ps.o -o ps.elf
 	$(TOOLCHAIN)-objcopy -O binary ps.elf ps.bin
 
+uname.o: uname.c
+	$(CC) $(CFLAGS) -c $^ -o $@
+
+uname: uname.o
+	$(CC) $(LDFLAGS) uname.o -o uname.elf
+	$(TOOLCHAIN)-objcopy -O binary uname.elf uname.bin
+
+pwd.o: pwd.c
+	$(CC) $(CFLAGS) -c pwd.c -o pwd.o
+
+pwd: pwd.o
+	$(CC) $(LDFLAGS) pwd.o -o pwd.elf
+	$(TOOLCHAIN)-objcopy -O binary pwd.elf pwd.bin
+
+
 install:
 	cp ls.bin $(STAGING)/bin/ls
 	cp cat.bin $(STAGING)/bin/cat
 	cp ps.bin $(STAGING)/bin/ps
+	cp uname.bin $(STAGING)/bin/uname
+	cp pwd.bin $(STAGING)/bin/pwd
 
 clean:
-	rm -rf ls.o ls.elf cat.o cat.elf ps.o ps.elf
-
-
+	rm -rf ls.o ls.elf cat.o cat.elf ps.o ps.elf uname.o uname.elf
 
