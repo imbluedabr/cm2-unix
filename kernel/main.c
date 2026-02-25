@@ -56,11 +56,15 @@ void main() {
     kputs("populated devfs!\nstarting init...\n");
     
     //exec the init process
+    struct proc* boot = &process_table[0];
+    boot->cwd_inode = &rootfs;
+    strlcpy(boot->cwd_path, "/", 1);
+
     exe_t init;
-    proc_exec(&init, "/bin/sh", NULL, NULL);
+    proc_exec(&init, &rootfs, "/bin/sh", NULL, NULL);
     int init_state = 0;
     while(init_state == 0) {
-        init_state = proc_exec_update(&init);
+        init_state = proc_exec_update(&init, boot);
         device_update();
     }
     if (init_state < 0) {
