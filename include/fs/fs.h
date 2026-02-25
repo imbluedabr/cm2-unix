@@ -26,7 +26,7 @@ struct fatfs_inode {
 
 struct inode {
     struct superblock* fs; //this is the filesystem that the inode is part of
-    char name[FS_INAME_LEN]; //the name of the file
+    char name[FS_INAME_LEN + 1]; //the name of the file
     uint8_t refcount; //the amount of references exist to this inode, this includes file descriptors and dentries
     uint8_t mode; //currently only stores filetype, but i will later expand it will actual permissions and ownership
     ino_t dir; //the parent directory of this inode
@@ -133,7 +133,9 @@ extern struct fd fd_table[MAX_FD];
 void fs_init();
 struct inode* create_inode(const char* name);
 void free_inode(struct inode* i);
+struct inode* get_inode_ref(struct inode* i);
 int8_t lookup_dir(fs_lookup_t* state);
+struct inode* lookup_ino(ino_t ino);
 void register_filesystem(const char* name, struct super_ops* fs);
 struct super_ops* lookup_filesystem(const char* name);
 int fd_alloc();

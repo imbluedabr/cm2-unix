@@ -169,7 +169,7 @@ int8_t fatfs_readdir(fs_read_t* state)
             buff->mode = entry->mode;
             buff->size = entry->size;
             buff->time = 0;
-            strlcpy(buff->name, entry->name, FS_INAME_LEN - 1);
+            strlcpy(buff->name, entry->name, FS_INAME_LEN);
         }
         return 1;
     }

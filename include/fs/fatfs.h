@@ -3,7 +3,7 @@
 
 
 struct fatfs_file {
-    char name[FS_INAME_LEN];
+    char name[FS_INAME_LEN + 1];
     uint8_t fat_index;
     uint8_t mode;
     uint16_t size;

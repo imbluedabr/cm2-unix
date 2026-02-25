@@ -40,8 +40,8 @@ struct inode* create_inode(const char* name)
     }
     free_list_size = --tmp;
     struct inode* new = &inode_table[tmp];
-    new->refcount = 1;
-    strlcpy(new->name, (char*) name, FS_INAME_LEN - 1);
+    new->refcount = 0;
+    strlcpy(new->name, (char*) name, FS_INAME_LEN);
     return new;
 }
 
@@ -58,6 +58,14 @@ void free_inode(struct inode* i)
     }
 }
 
+struct inode* get_inode_ref(struct inode* i)
+{
+    if (i->refcount == 255) {
+        return NULL;
+    }
+    i->refcount++;
+    return i;
+}
 
 
 //TODO: improve inode lookup speed
@@ -95,7 +103,22 @@ int8_t lookup_dir(fs_lookup_t* state)
     return stat;
 }
 
+struct inode* lookup_ino(ino_t ino)
+{
+    struct inode* current = &inode_table[0];
+    struct inode* end = inode_table + INODE_TABLE_SIZE;
+    
+    while (current < end) {
 
+        //check if the inode numbers are equal
+        if (current->file == ino) {
+            return current;
+        }
+
+        current++;
+    }
+    return NULL;
+}
 
 void register_filesystem(const char* name, struct super_ops* fs)
 {
