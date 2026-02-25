@@ -59,7 +59,7 @@ void strlcpy(char* dest, char* src, uint32_t size)
 }
 
 
-void memset(void* dest, uint8_t value, uint32_t size)
+[[gnu::used]] void memset(void* dest, uint8_t value, uint32_t size)
 {
     while(size-- > 0) {
         ((uint8_t*) dest)[size] = value;
