@@ -6,11 +6,14 @@
 struct stat dirbuff[8];
 const char* ftypes = "dmfn";
 
+char cwd[FS_PATH_LEN + 1];
+
 void main(const char** argv)
 {
     STDOUT = 0;
     
-    const char* path = "/";
+    getcwd(cwd, FS_PATH_LEN);
+    const char* path = cwd;
     if (argv[1] != NULL) {
         path = argv[1];
     }
