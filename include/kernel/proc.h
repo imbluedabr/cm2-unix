@@ -6,10 +6,6 @@
 
 
 typedef struct {
-    struct device_request* req;
-} dev_write_t;
-
-typedef struct {
     uint8_t target_pid;
 } waitpid_t;
 
@@ -33,6 +29,10 @@ typedef struct {
     const char** argv;
     struct fd* file_buff[EXEC_MAX_PASSED_FD];
 } exe_t;
+
+typedef struct {
+    path_walk_t walker;
+} chdir_t;
 
 #define SYSCALL_STATE_NIL 255
 #define SYSCALL_STATE_BEGIN 0
@@ -58,15 +58,19 @@ struct proc {
     
     uint32_t program_base;
     uint32_t program_size;
+    
+    //current working directory
+    struct inode* cwd_inode;
+    char cwd_path[FS_PATH_LEN + 1];
 
     //this is the state that multi tick syscalls need
     union {
-        dev_write_t dev_write_state;
         waitpid_t waitpid_state;
         vfs_open_t open_state;
         vfs_read_t read_state;
         vfs_write_t write_state;
         exe_t exec_state;
+        chdir_t chdir_state;
     };
     
 };

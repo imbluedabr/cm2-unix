@@ -1,5 +1,6 @@
 #include <kernel/exec.h>
 #include <kernel/syscall.h>
+#include <kernel/panic.h>
 #include <lib/alloc.h>
 #include <lib/kprint.h>
 #include <lib/stdlib.h>
@@ -7,13 +8,13 @@
 
 #include <arch/riscv/cm2exef.h>
 
-int proc_exec(exe_t* exec_state, const char* path, const char** argv, int* fileno_vec)
+int proc_exec(exe_t* exec_state, struct inode* cwd, const char* path, const char** argv, int* fileno_vec)
 {
     if (path == NULL) {
         return -1;
     }
 
-    walk_path_init(&exec_state->walker, path);
+    walk_path_init(&exec_state->walker, cwd, path);
     exec_state->descriptor.file = NULL;
     exec_state->argv = argv;
     
@@ -33,16 +34,16 @@ int proc_exec(exe_t* exec_state, const char* path, const char** argv, int* filen
     return 0;
 }
 
-int proc_exec_update(exe_t* exec_state)
+int proc_exec_update(exe_t* exec_state, struct proc* process)
 {
     struct fd* f = &exec_state->descriptor;
     fs_read_t* rstate = &exec_state->fs;
 
     if (f->file) {
         int8_t stat = rstate->fs->fops->read(rstate);
-        
+        int rt_val = 0;
         if (stat < 0) {
-            return -1;
+            rt_val = -1;
         } else if (stat == 1) {
             uint32_t program_base = (uint32_t) rstate->buffer;
             struct cm2exef_header* hdr = rstate->buffer;
@@ -54,18 +55,27 @@ int proc_exec_update(exe_t* exec_state)
                     exec_state->argv,
                     exec_state->file_buff
                     );
+
+            new->cwd_inode = get_inode_ref(process->cwd_inode);
+            strlcpy(new->cwd_path, process->cwd_path, FS_PATH_LEN);
+            
             new->program_base = program_base;
             new->program_size = hdr->initial_sp;
-            return new->pid;
+            rt_val = new->pid;
         }
-        return 0;
+        if (rt_val != 0) {
+            free_inode(exec_state->descriptor.file);
+            exec_state->descriptor.file = NULL;
+        }
+
+        return rt_val;
     }
 
 	int8_t rt = walk_path(&exec_state->walker);
 	if (rt < 0) {
 		return -1;
 	} else if (rt == 1) {
-        struct inode* file = exec_state->walker.fs_state.dir;
+        struct inode* file = get_inode_ref(exec_state->walker.fs_state.dir);
         if (!FS_IS_A_FILE(file->mode)) {
             return -1;
         }

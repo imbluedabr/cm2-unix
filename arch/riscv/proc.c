@@ -78,6 +78,8 @@ struct proc* proc_create(uint32_t entry_point, uint32_t stack_pointer, const cha
     new_process->return_value = 0;
     new_process->syscall_state = SYSCALL_STATE_NIL;
 
+    new_process->cwd_inode = NULL;
+
     new_process->program_base = 0;
     new_process->program_size = 0;
     
@@ -90,8 +92,7 @@ struct proc* proc_create(uint32_t entry_point, uint32_t stack_pointer, const cha
             struct fd* file = file_vec[file_vec_count++];
             int new_fd_num = fd_alloc();
             struct fd* file_cpy = &fd_table[new_fd_num];
-            file_cpy->file = file->file;
-            file->file->refcount++;
+            file_cpy->file = get_inode_ref(file->file);
             file_cpy->flags = file->flags;
             file_cpy->offset = file->offset;
             int new_fileno = proc_alloc_fd(new_process);
@@ -116,6 +117,8 @@ void proc_delete(struct proc* process) {
         for (int i = 0; i < PROC_MAXFILES; i++) {
             vfs_close(process->open_files[i]);
         }
+        free_inode(process->cwd_inode);
+        process->cwd_inode = NULL;
 
         free((void*) process->program_base);
     }

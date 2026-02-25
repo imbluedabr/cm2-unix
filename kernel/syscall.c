@@ -77,7 +77,7 @@ void block_proc()
 void sys_open()
 {
     struct proc* process = current_process;
-    walk_path_init(&process->open_state.walker, (const char*) syscall_args[1]);
+    walk_path_init(&process->open_state.walker, current_process->cwd_inode, (const char*) syscall_args[1]);
     
     //block the process
     block_proc();
@@ -85,27 +85,36 @@ void sys_open()
 
 void sys_open_update(struct proc* process)
 {
+    int return_code = 0;
     int8_t rt = walk_path(&process->open_state.walker);
     if (rt < 0) { //directory not found
-        proc_resume(process, -1);
+        return_code = -1;
+        goto resume;
     } else if (rt == 1) { //we walked the entire path
         uint8_t new_fd = fd_alloc();
         struct fd* fd_p = &fd_table[new_fd];
-        struct inode* i = process->open_state.walker.fs_state.dir;
-        i->refcount++;
+        struct inode* i = get_inode_ref(process->open_state.walker.fs_state.dir);
+        if (i == NULL) {
+            return_code = -1;
+            goto resume;
+        }
         fd_p->file = i;
         fd_p->flags = 0;
         fd_p->offset = 0;
         
         uint8_t fdnum = proc_alloc_fd(process);
         if (fdnum == PROC_FILE_NIL) { 
-            proc_resume(process, -1);
-            return;
+            return_code = -1;
+            goto resume;
         }
         
         process->open_files[fdnum] = new_fd;
-        proc_resume(process, fdnum);
+        return_code = fdnum;
+        goto resume;
     }
+    return;
+resume:
+    proc_resume(process, return_code);
 }
 
 //int read(int fd, void* buffer, uint32_t count)
@@ -194,7 +203,7 @@ void sys_fstat()
 
     buff->d_ino = i->file;
     buff->mode = i->mode;
-    strlcpy(buff->name, i->name, FS_INAME_LEN - 1);
+    strlcpy(buff->name, i->name, FS_INAME_LEN);
     //TODO: call the fs fstat implementation
     current_process->return_value = 0;
 }
@@ -231,17 +240,33 @@ void sys_readdir_update(struct proc* process)
 //int getcwd(char* buff, int size)
 void sys_getcwd()
 {
-
+    int size = (syscall_args[2] >= FS_PATH_LEN) ? FS_PATH_LEN : syscall_args[2];
+    strlcpy((char*) syscall_args[1], current_process->cwd_path, size);
+    current_process->return_value = 0;
 }
 
+//int chdir(const char* path)
 void sys_chdir()
 {
-
+    walk_path_init(&current_process->chdir_state.walker, current_process->cwd_inode, (const char*) syscall_args[1]);
+    block_proc();
 }
 
 void sys_chdir_update(struct proc* process)
 {
-
+    int8_t rt = walk_path(&process->chdir_state.walker);
+    if (rt < 0) {
+        proc_resume(process, rt);
+    } else if (rt == 1) {
+        if (!FS_IS_A_FILE(process->chdir_state.walker.fs_state.dir->mode)) {
+            free_inode(process->cwd_inode);
+            process->cwd_inode = get_inode_ref(process->chdir_state.walker.fs_state.dir);
+            construct_cwd(process->cwd_path, process->chdir_state.walker.path, 1);
+            proc_resume(process, 0);
+        } else {
+            proc_resume(process, -1);
+        }
+    }
 }
 
 void sys_yield()
@@ -252,7 +277,7 @@ void sys_yield()
 //pid_t exec(const char* path, const char** argv, int* fileno_vec);
 void sys_exec()
 {
-    int status = proc_exec(&current_process->exec_state, (const char*) syscall_args[1], (const char**) syscall_args[2], (int*) syscall_args[3]);
+    int status = proc_exec(&current_process->exec_state, current_process->cwd_inode, (const char*) syscall_args[1], (const char**) syscall_args[2], (int*) syscall_args[3]);
     if (status < 0) {
         current_process->return_value = -1;
         return;
@@ -263,7 +288,7 @@ void sys_exec()
 
 void sys_exec_update(struct proc* process)
 {
-    int status = proc_exec_update(&process->exec_state);
+    int status = proc_exec_update(&process->exec_state, process);
     if (status != 0) {
         proc_resume(process, status);
     }

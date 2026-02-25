@@ -3,7 +3,7 @@
 #include <kernel/device.h>
 
 typedef struct {
-    char path_cpy[FS_PATH_LEN];
+    char path_cpy[FS_PATH_LEN + 1];
     uint8_t path_index;
     const char* path;
     fs_lookup_t fs_state;
@@ -17,8 +17,9 @@ typedef struct {
 
 extern struct inode rootfs;
 
-void walk_path_init(path_walk_t* state, const char* path);
+void walk_path_init(path_walk_t* state, struct inode* rel_base, const char* path);
 int8_t walk_path(path_walk_t* state);
+void construct_cwd(char* buff, const char* path, uint8_t full);
 
 int mount_root(const char* fs_name, dev_t devno);
 int mount_devfs(const char* fs_name);
