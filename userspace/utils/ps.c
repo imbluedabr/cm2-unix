@@ -4,7 +4,6 @@
 
 void main()
 {
-    STDOUT = 0;
     struct procinfo buff[4];
 
     int count = sysctl(0, buff, 4);

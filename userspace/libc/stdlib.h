@@ -30,6 +30,8 @@ int readdir(int dirfd, struct stat* buffer, int count);
 
 int ioctl(int fd, int cmd, void* arg);
 
+int fstat(int fd, struct stat* buff);
+
 int getcwd(char* buff, int size);
 
 int chdir(const char* path);

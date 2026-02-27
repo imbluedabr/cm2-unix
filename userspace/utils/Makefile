@@ -12,7 +12,7 @@ include $(LIBC)/base.mk
 CFLAGS = $(BASE_CFLAGS) -Os -flto -I$(KERNEL_HEADERS) -I$(LIBC)
 LDFLAGS = $(BASE_LDFLAGS) -Os -flto -T$(LIBC)/linker.ld $(LIBC)/*.o
 
-all: clean ls cat ps uname pwd install
+all: clean ls cat ps uname pwd istat install
 
 
 ls.o: ls.c
@@ -50,6 +50,14 @@ pwd: pwd.o
 	$(CC) $(LDFLAGS) pwd.o -o pwd.elf
 	$(TOOLCHAIN)-objcopy -O binary pwd.elf pwd.bin
 
+istat.o: istat.c
+	$(CC) $(CFLAGS) -c istat.c -o istat.o
+
+istat: istat.o
+	$(CC) $(LDFLAGS) istat.o -o istat.elf
+	$(TOOLCHAIN)-objcopy -O binary istat.elf istat.bin
+
+
 
 install:
 	cp ls.bin $(STAGING)/bin/ls
@@ -57,7 +65,8 @@ install:
 	cp ps.bin $(STAGING)/bin/ps
 	cp uname.bin $(STAGING)/bin/uname
 	cp pwd.bin $(STAGING)/bin/pwd
+	cp istat.bin $(STAGING)/bin/istat
 
 clean:
-	rm -rf ls.o ls.elf cat.o cat.elf ps.o ps.elf uname.o uname.elf
+	rm -rf ls.o ls.elf cat.o cat.elf ps.o ps.elf uname.o uname.elf pwd.o pwd.elf istat.o istat.elf
 

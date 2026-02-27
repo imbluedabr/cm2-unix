@@ -37,7 +37,7 @@ char cwd[FS_PATH_LEN + 1];
 void main()
 {
     tty0 = open("/dev/tty0", 0);
-    STDOUT = tty0;
+    stdout = tty0;
     
     while(1) {
         memset(line_buffer, 0, LINE_SIZE);

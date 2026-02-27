@@ -5,7 +5,6 @@ char buff[256];
 
 void main(const char** argv)
 {
-    STDOUT = 0;
     const char* path = argv[1];
     if (path == NULL) {
         exit(-1);
@@ -17,7 +16,7 @@ void main(const char** argv)
         exit(-1);
     }
     int count = read(file, buff, 256);
-    write(STDOUT, buff, strnlen(buff, count));
+    write(stdout, buff, strnlen(buff, count));
 
     exit(0);
 }

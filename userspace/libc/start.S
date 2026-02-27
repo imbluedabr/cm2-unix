@@ -4,6 +4,8 @@
 
 .extern main
 .extern exit
+.extern stdin
+.extern stdout
 
 #magic
 .word 0xE85250D6
@@ -20,6 +22,10 @@
 
 
 _start:
+#    la t0, stdout
+#    sb x0, 0(t0)
+#    la t0, stdin
+#    sb x0, 0(t0)
     call main
     #a0 is the return value of main which is also the argument register for exit
     call exit

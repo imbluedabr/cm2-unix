@@ -3,8 +3,10 @@
 
 #include <syscalls.h>
 #include <stdarg.h>
+#include <stdbool.h>
 
-uint8_t STDOUT;
+uint8_t stdout;
+uint8_t stdin;
 
 uint32_t strlen(const char* str)
 {
@@ -95,11 +97,21 @@ void int_to_hex(char* buff, uint16_t val, uint8_t numc)
 const char *u32_to_hex(uint32_t value) {
     static const char lookup[] = "0123456789abcdef";
     static char buf[9];
-    for (int i = 0; i < 8; i++) {
-        buf[7 - i] = lookup[value & 0xf];
-        value >>= 4;
+    bool reached_begin = false;
+    int count = 0;
+    for (int i = 7; i >= 0; i--) {
+        uint8_t val = (value >> (i*4)) & 0xf;
+        if (val != 0) {
+            reached_begin = true;
+        }
+        if (reached_begin) {
+            buf[count++] = lookup[val];
+        }
     }
-    buf[8] = '\0';
+    if (!reached_begin) {
+        buf[count++] = '0';
+    }
+    buf[count] = '\0';
     return buf;
 }
 
@@ -127,6 +139,11 @@ int readdir(int dirfd, struct stat* buffer, int count)
 int ioctl(int fd, int cmd, void* arg)
 {
     return SYSCALL(SYS_IOCTL, fd, cmd, (uint32_t) arg);
+}
+
+int fstat(int fd, struct stat* buff)
+{
+    return SYSCALL(SYS_FSTAT, fd, (uint32_t) buff, 0);
 }
 
 int getcwd(char* buff, int size)
@@ -167,12 +184,12 @@ void yield()
 
 void putc(char c)
 {
-    write(STDOUT, &c, 1);
+    write(stdout, &c, 1);
 }
 
 void puts(const char *str)
 {
-    write(STDOUT, str, strlen(str));
+    write(stdout, str, strlen(str));
 }
 
 void printf(const char *fmt, ...) 
@@ -195,12 +212,21 @@ void printf(const char *fmt, ...)
             }
             else if (*fmt == 'x') {
                 int num = va_arg(params, int);
-                char *hex = u32_to_hex(num);
+                const char *hex = u32_to_hex(num);
                 puts(hex);
             }
         }
         fmt++;
     }
+}
+
+int fgets(char* buff, int size, int fd)
+{
+    int count = read(fd, buff, size);
+    if (count < size) {
+        buff[count] = '\n';
+    }
+    return count++;
 }
 
 
