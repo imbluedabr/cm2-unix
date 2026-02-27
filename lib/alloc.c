@@ -36,10 +36,10 @@ void *malloc(size_t size)
             return allocations[i].block;
         }
     }
-    allocations[allocations_size + 1 - 1].block = allocations[allocations_size - 1].block + allocations[allocations_size - 1].size + 4;
-    allocations[allocations_size + 1 - 1].size = size;
-    allocations[allocations_size + 1 - 1].occupied = true;
-    return (allocations[allocations_size++ + 1 - 1].block = (void *)((uintptr_t)allocations[allocations_size + 1 - 1].block & 0xfffffffc));
+    allocations[allocations_size].block = allocations[allocations_size - 1].block + allocations[allocations_size - 1].size + 4;
+    allocations[allocations_size].size = size;
+    allocations[allocations_size].occupied = true;
+    return (allocations[allocations_size++].block = (void *)((uintptr_t)allocations[allocations_size].block & 0xfffffffc));
 }
 
 void free(void *ptr)
