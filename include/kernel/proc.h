@@ -23,11 +23,16 @@ typedef struct {
 
 #define EXEC_MAX_PASSED_FD 4
 typedef struct {
-	path_walk_t walker;
-	fs_read_t fs;
     struct fd descriptor;
     const char** argv;
     struct fd* file_buff[EXEC_MAX_PASSED_FD];
+	path_walk_t walker;
+	fs_read_t fs;
+    enum : uint8_t {
+        WALK_PATH,
+        LOAD_HEADER,
+        LOAD_BODY
+    } state;
 } exe_t;
 
 typedef struct {

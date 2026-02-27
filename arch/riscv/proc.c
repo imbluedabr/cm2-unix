@@ -115,7 +115,7 @@ void proc_delete(struct proc* process) {
         free_processes[free_processes_count++] = process->pid;
         
         for (int i = 0; i < PROC_MAXFILES; i++) {
-            vfs_close(process->open_files[i]);
+            vfs_close(i);
         }
         free_inode(process->cwd_inode);
         process->cwd_inode = NULL;

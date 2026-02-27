@@ -23,7 +23,7 @@ struct cm2exef_header {
     enum cm2exef_abi abi;    // ILP32 = 1, ILP32F = 2, ILP32D = 3, and ILP32E = 4, zero is invalid.
     enum cm2exef_isa isa;   // what isa this executable is made for.
     struct cm2exef_abi_version version;
-    uint32_t initial_sp;
+    uint32_t program_break; //offset to the end of the program, this includes bss and any other nobits sections
 };
 
 
