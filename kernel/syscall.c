@@ -193,8 +193,8 @@ void sys_ioctl()
 //int fstat(int fd, struct stat* buff)
 void sys_fstat()
 {
-    struct stat* buff = (struct stat*) syscall_args[1];
-    struct fd* descriptor = proc_get_fd(syscall_args[0]);
+    struct stat* buff = (struct stat*) syscall_args[2];
+    struct fd* descriptor = proc_get_fd(syscall_args[1]);
     if (descriptor == NULL) {
         current_process->return_value = -1;
         return;
@@ -383,6 +383,23 @@ void sys_sysctl()
         char* ubuff = buff;
         strlcpy(ubuff, (char*) uname, count - 1);
         current_process->return_value = 0;
+    } else if (cmd == 2) {
+        struct istat* ibuff = (struct istat*) syscall_args[2];
+        int count = 0;
+        ibuff->free_inode_count = inode_free_list_size;
+        ibuff->free_descriptor_count = fd_get_free();
+        for (int i = 0; i < INODE_TABLE_SIZE; i++) {
+            struct inode* node = &inode_table[i];
+            struct stat* stbuff = &ibuff->buff[count];
+            if (node->fs != NULL) {
+                stbuff->d_ino = node->file;
+                stbuff->mode = node->mode;
+                stbuff->size = node->size;
+                strlcpy(stbuff->name, node->name, FS_INAME_LEN);
+                count++;
+            }
+        }
+        current_process->return_value = count;
     }
 }
 
