@@ -85,7 +85,7 @@ userspace:
 	/bin/env python3 $(ROOT)/scripts/fat8.mkfs.py $(STAGING)
 
 run: image.bin
-	$(MAKE) -C $(EMULATOR) run ROOT="$(EMULATOR)" OUTPUT_ARGS="$(ROOT)/image.bin $(EMULATOR)/emulator-tilesheet/minesweeper.bmp $(ROOT)/fat8.img"
+	$(MAKE) -C $(EMULATOR) run ROOT="$(EMULATOR)" OUTPUT_ARGS="taurus $(ROOT)/image.bin $(EMULATOR)/emulator-tilesheet/minesweeper.bmp $(ROOT)/fat8.img $(ROOT)/emulator-sprites"
 
 tools:
 	$(MAKE) -C $(EMULATOR) all ROOT="$(EMULATOR)" RAYLIB="$(RAYLIB)" OPTIMIZE=true

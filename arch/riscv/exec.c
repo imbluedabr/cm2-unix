@@ -74,7 +74,7 @@ int proc_exec_update(exe_t* exec_state, struct proc* process)
             } else if (rt == 1) {
                 struct cm2exef_header* hdr = rstate->buffer;
                 int size = hdr->program_break;
-                kprintf("size: %x\n", size);
+                //kprintf("size: %x\n", size);
                 //free the memory used by the header
                 free(rstate->buffer);
 

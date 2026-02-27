@@ -44,7 +44,7 @@ void main() {
     register_filesystem("devfs", (struct super_ops*) &devfs_sops);
     register_filesystem("fatfs", (struct super_ops*) &fatfs_sops);
     
-    mount_root("fatfs", disk0_devno); 
+    mount_root("fatfs", disk0_devno);
     if (mount_devfs("devfs") < 0) {
         panic("devfs mount failed");
     }
