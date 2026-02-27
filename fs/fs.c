@@ -1,10 +1,12 @@
 #include <fs/fs.h>
 #include <lib/stdlib.h>
+#include <lib/kprint.h>
+#include <kernel/panic.h>
 
 struct inode inode_table[INODE_TABLE_SIZE];
 
 uint8_t free_list[INODE_TABLE_SIZE];
-uint8_t free_list_size;
+uint8_t inode_free_list_size;
 
 
 struct fd fd_table[MAX_FD];
@@ -22,7 +24,7 @@ struct fs_tuple filesystem_registry[MAX_FILESYSTEM_COUNT];
 
 void fs_init()
 {
-    free_list_size = INODE_TABLE_SIZE;
+    inode_free_list_size = INODE_TABLE_SIZE;
 
     for (int i = 0; i < INODE_TABLE_SIZE; i++) {
         free_list[i] = i;
@@ -34,12 +36,13 @@ void fs_init()
 
 struct inode* create_inode(const char* name)
 {
-    uint8_t tmp = free_list_size;
+    uint8_t tmp = inode_free_list_size;
     if (tmp == 0) {
+        panic("out of inodes");
         return NULL;
     }
-    free_list_size = --tmp;
-    struct inode* new = &inode_table[tmp];
+    inode_free_list_size = --tmp;
+    struct inode* new = &inode_table[free_list[tmp]];
     new->refcount = 0;
     strlcpy(new->name, (char*) name, FS_INAME_LEN);
     return new;
@@ -47,6 +50,9 @@ struct inode* create_inode(const char* name)
 
 void free_inode(struct inode* i)
 {
+    if (i == NULL) {
+        return;
+    }
     if (i->fs == NULL) {
         return;
     }
@@ -54,12 +60,15 @@ void free_inode(struct inode* i)
         i->refcount--;
     } else {
         i->fs = NULL;
-        free_list[free_list_size++] = i - inode_table;
+        free_list[inode_free_list_size++] = i - inode_table;
     }
 }
 
 struct inode* get_inode_ref(struct inode* i)
 {
+    if (i == NULL) {
+        panic("inode use after free");
+    }
     if (i->refcount == 255) {
         return NULL;
     }
@@ -86,7 +95,7 @@ int8_t lookup_dir(fs_lookup_t* state)
         struct inode* end = inode_table + INODE_TABLE_SIZE;
         
         while (current < end) {
-
+            
             //check if the file is in the right dir
             if (current->dir == state->dir->file) {
                 if (strncmp(current->name, state->fname, FS_INAME_LEN) == 0) {//then compare the names
@@ -152,5 +161,15 @@ int fd_alloc()
     return -1;
 }
 
+int fd_get_free()
+{
+    int count = 0;
+    for (int i = 0; i < MAX_FD; i++) {
+        if (fd_table[i].file == NULL) {
+            count++;
+        }
+    }
+    return count;
+}
 
 

@@ -104,7 +104,7 @@ int mount_root(const char* fs_name, dev_t devno)
     if (fs == NULL) {
         return -1;
     }
-        
+    rootfs.refcount = 1;
     return fs->mount(&rootfs, devno, NULL);
 }
 

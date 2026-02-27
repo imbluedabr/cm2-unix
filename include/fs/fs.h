@@ -10,8 +10,6 @@ struct dentry;
 
 #define FS_GET_INO_OFF(ID) (ID << 16)
 
-#define INODE_TABLE_SIZE 32
-
 struct romfs_inode {
     void* data;
 };
@@ -38,6 +36,10 @@ struct inode {
         struct fatfs_inode fatfs;
     };
 };
+
+#define INODE_TABLE_SIZE 32
+extern struct inode inode_table[INODE_TABLE_SIZE];
+extern uint8_t inode_free_list_size;
 
 typedef struct {
     struct device_request* req;
@@ -139,6 +141,6 @@ struct inode* lookup_ino(ino_t ino);
 void register_filesystem(const char* name, struct super_ops* fs);
 struct super_ops* lookup_filesystem(const char* name);
 int fd_alloc();
-
+int fd_get_free();
 
 

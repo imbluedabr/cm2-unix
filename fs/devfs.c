@@ -113,7 +113,7 @@ int8_t devfs_readdir(fs_read_t* state) {
         dirent->mode = FS_MODE_DEV;
         dirent->size = 0; //should use ioctl to find size of device
         dirent->d_ino = DEVFS_CREATE_INO(dir_i-1);
-        strlcpy(dirent->name, (char*) file_entry->name, FS_INAME_LEN - 1);
+        strlcpy(dirent->name, (char*) file_entry->name, FS_INAME_LEN);
     }
     state->bytes_read = ((++dir_i) << 16) | buff_i;
 

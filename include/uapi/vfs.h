@@ -27,3 +27,11 @@ struct stat {
 #define FD_NONBLOCK (1 << 3)
 
 
+struct istat {
+    uint8_t free_inode_count;
+    uint8_t free_descriptor_count;
+    struct stat* buff;
+};
+
+
+
