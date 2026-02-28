@@ -10,8 +10,8 @@
 | 4         | int         | ioctl   | int fd               | int cmd              | void* arg        | yes         |
 | 5         | int         | fstat   | int fd               | struct stat* buff    |                  | yes         |
 | 6         | int         | readdir | int fd               | struct stat* buff    | int count        | yes         |
-| 7         | int         | getcwd  | char* buff           | int size             |                  | no          |
-| 8         | int         | chdir   | const char* path     |                      |                  | no          |
+| 7         | int         | getcwd  | char* buff           | int size             |                  | yes         |
+| 8         | int         | chdir   | const char* path     |                      |                  | tes         |
 | 9         | void        | yield   |                      |                      |                  | yes         |
 | 10        | pid_t       | exec    | const char* path     | const char** argv    | int* fileno_vec  | yes         |
 | 11        | void        | exit    | int error_code       |                      |                  | yes         |
