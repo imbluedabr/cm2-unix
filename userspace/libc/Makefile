@@ -12,7 +12,7 @@ include base.mk
 CFLAGS = $(BASE_CFLAGS) -Os -flto -I$(KERNEL_HEADERS)
 
 SRCS = $(wildcard *.c)
-OBJS = $(SRCS:%.c=%.o) start.o divdi.o divsi.o mulsi.o
+OBJS = $(SRCS:%.c=%.o) start.o
 
 
 %.o: %.c
