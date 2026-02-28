@@ -41,7 +41,7 @@ void main() {
     });
     device_create(&disk0_devno, GEN_DISK_MAJOR, (void*) 0xFFC3);
 
-    register_filesystem("romfs", (struct super_ops*) &romfs_sops);
+    //register_filesystem("romfs", (struct super_ops*) &romfs_sops);
     register_filesystem("devfs", (struct super_ops*) &devfs_sops);
     register_filesystem("fatfs", (struct super_ops*) &fatfs_sops);
     
