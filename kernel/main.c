@@ -17,7 +17,7 @@
 #include <fs/fatfs.h>
 
 void main() {
-    dev_t tty0_devno, gpu0_devno, disk0_devno;
+    dev_t tty0_devno, tty1_devno, gpu0_devno, disk0_devno;
     
     //initialize functions
     device_init();
@@ -30,6 +30,7 @@ void main() {
     kputs(uname);
     
     device_create(&tty0_devno, TTY_MAJOR, (void*) 0xFFF1);
+    device_create(&tty1_devno, TTY_MAJOR, (void*) 0xFFBD);
     device_create(&gpu0_devno, TILEGPU_MAJOR, &(struct tilegpu_hw_interface){
         .controls = TILEGPU_CONTROLS,
         .fx_imm = TILEGPU_FX_IMM,
@@ -51,6 +52,7 @@ void main() {
     kputs("setup filesystem!\n");
 
     devfs_create_handle("tty0", tty0_devno);
+    devfs_create_handle("tty1", tty1_devno);
     devfs_create_handle("gpu0", gpu0_devno);
     devfs_create_handle("disk0", disk0_devno);
     kputs("populated devfs!\nstarting init...\n");
