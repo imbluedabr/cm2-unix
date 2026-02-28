@@ -9,7 +9,7 @@ RAYLIB ?= true
 EMULATOR ?= $(ROOT)/emulator/riscv/cm2-riscv-emulator
 
 # the filesystems
-FS_SELECT = $(ROOT)/fs/fs.c $(ROOT)/fs/vfs.c $(ROOT)/fs/romfs.c $(ROOT)/fs/devfs.c $(ROOT)/fs/fatfs.c
+FS_SELECT = $(ROOT)/fs/fs.c $(ROOT)/fs/vfs.c $(ROOT)/fs/devfs.c $(ROOT)/fs/fatfs.c
 
 #source files
 CSRCS = $(FS_SELECT) \
