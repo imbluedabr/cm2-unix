@@ -156,8 +156,8 @@ int  ilt(int a, int b) { return a < b; }
 int ineq(int a, int b) { return a != b; }
 int  ieq(int a, int b) { return a == b; }
 int imod(int a, int b) { return 0; } //unimplemented
-int imul(int a, int b) { return a * b; }
-int idiv(int a, int b) { return a / b; }
+int imul(int a, int b) { return 0; }
+int idiv(int a, int b) { return 0; }
 int iadd(int a, int b) { return a + b; }
 int isub(int a, int b) { return a - b; }
 const char* mathops = "&|><~=%*/+-";
@@ -208,19 +208,20 @@ int emath_test()
 
 int main(const char** argv)
 {
-	initprgm();
-	initvars();
-
+	//initprgm();
+	//initvars();
+	stdout = 0;
+	stdin = 0;
 	for (int i = 0; i < 4; i++) {
-		printf("%x\n", &bcmds[i]);
+		printf("%s\n", bcmds[i]);
 	}
 
 	//if (argc == 2 && scmp(argv[1], "-emath")) { return emath_test(); }
 	//int f = argv[1] != NULL ? open(argv[1], FD_R) : stdin;
 	//if (f == -1) berror(-1, "FILE UNREADABLE");
 	
-	read_program(stdin);
-	run_basic();
+	//read_program(stdin);
+	//run_basic();
 	return 0;
 }
 
