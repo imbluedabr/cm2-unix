@@ -212,7 +212,7 @@ int main(const char** argv)
 	initvars();
 
 	for (int i = 0; i < 4; i++) {
-		printf("%s\n", &bcmds[i]);
+		printf("%x\n", &bcmds[i]);
 	}
 
 	//if (argc == 2 && scmp(argv[1], "-emath")) { return emath_test(); }

@@ -9,7 +9,7 @@ CC = $(TOOLCHAIN)-gcc
 
 include $(LIBC)/base.mk
 
-CFLAGS = $(BASE_CFLAGS) -Os -flto -I$(KERNEL_HEADERS) -I$(LIBC)
+CFLAGS = $(BASE_CFLAGS) -Os -I$(KERNEL_HEADERS) -I$(LIBC)
 LDFLAGS = $(BASE_LDFLAGS) -Os -flto -T$(LIBC)/linker.ld $(LIBC)/*.o
 
 
