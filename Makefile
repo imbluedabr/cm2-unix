@@ -102,6 +102,7 @@ clean:
 	rm -f $(OBJS) $(MN_FILE) image.bin fat8.img
 	rm -rf dump.s.dump
 	rm -rf verbose_dump.s.dump
+	$(MAKE) -C $(USERSPACE) ROOT=$(USERSPACE) STAGING=$(STAGING) TOOLCHAIN=$(TOOLCHAIN) KERNEL_HEADERS=$(ROOT)/include/uapi clean
 
 rebuild: clean userspace image size
 

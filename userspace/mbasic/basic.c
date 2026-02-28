@@ -44,8 +44,8 @@ char* sstrtok(char* s) {
 int rand(void);
 void srand(unsigned int);
 unsigned long time(unsigned long *);
-char varnames[64][8];
-int  varcontent[64];
+static char varnames[64][8];
+static int  varcontent[64];
 void initvars() { for(int i=0; i<64; ++i) varnames[i][0] = 0; }
 int getvar(const char* s) {
 	if (scmp(s, "RANDOM")) return 3; //arbitrary random number generated with a dice
@@ -64,7 +64,7 @@ int setvar(const char* s, int v) {
 	return 0; // returns 0 if it can't find a free variable slot
 }
 // init program memory
-char prgm[100][64];
+static char prgm[100][64];
 void initprgm() { for(int i=0; i<100; ++i) prgm[i][0] = 0; }
 // GOSUB stack
 int _linestack[16];
@@ -208,8 +208,8 @@ int emath_test()
 
 int main(const char** argv)
 {
-	//initprgm();
-	//initvars();
+	initprgm();
+	initvars();
 	stdout = 0;
 	stdin = 0;
 	for (int i = 0; i < 4; i++) {
@@ -220,8 +220,8 @@ int main(const char** argv)
 	//int f = argv[1] != NULL ? open(argv[1], FD_R) : stdin;
 	//if (f == -1) berror(-1, "FILE UNREADABLE");
 	
-	//read_program(stdin);
-	//run_basic();
+	read_program(stdin);
+	run_basic();
 	return 0;
 }
 
