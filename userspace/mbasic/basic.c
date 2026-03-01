@@ -84,12 +84,10 @@ void berror(int linenum, const char* e) {
 // commands
 int emath(char*);
 typedef enum { PRINT,INPUT,VAR,IF,GOTO,GOSUB,RET,REM } BasicCommands;
-const char* bcmds[] = {"PRINT","INPUT","VAR","IF","GOTO","GOSUB","RET","END"};
+const char bcmds[][6] = {"PRINT","INPUT","VAR","IF","GOTO","GOSUB","RET","END"};
 int getbcmd(const char* s) {
-	printf("y: %s\n", *(bcmds + 1));
-	for (int i = 0; i < 4; ++i) {
-		printf("%s\n", *(bcmds + i));
-		if (strncmp(s, bcmds[i], 5) == 0) {
+	for (int i = 0; i < 8; ++i) {
+		if (strncmp(s, bcmds[i], 6) == 0) {
 			return i;
 		};
 	}
@@ -140,7 +138,7 @@ int cgosub(int ln, char* s) {
 }
 int cret(int ln, char* s) { return lnpop(); }
 int crem(int ln, char* s) { exit(0); }
-BasicCmd bfuncs[] = {cprint,cinput,cvar,cif,cgoto,cgosub,cret,crem};
+BasicCmd bfuncs[8];
 int runcmd(int ln, char* s) {
 	char buf[64]; scpy(buf, s);
 	char* token = sstrtok(buf);
@@ -160,9 +158,9 @@ int imul(int a, int b) { return 0; }
 int idiv(int a, int b) { return 0; }
 int iadd(int a, int b) { return a + b; }
 int isub(int a, int b) { return a - b; }
-const char* mathops = "&|><~=%*/+-";
+const char mathops[] = "&|><~=%*/+-";
 typedef int (*Mathfunc)(int,int);
-Mathfunc mathfuncs[] = {iand,ior,igt,ilt,ineq,ieq,imod,imul,idiv,iadd,isub};
+Mathfunc mathfuncs[11];
 int emath(char* s) {
 	if (!*s) return 0;
 	for (int c,i=0; (c=mathops[i]); ++i)
@@ -212,9 +210,25 @@ int main(const char** argv)
 	initvars();
 	stdout = 0;
 	stdin = 0;
-	for (int i = 0; i < 4; i++) {
-		printf("%s\n", bcmds[i]);
-	}
+	bfuncs[PRINT] = cprint;
+	bfuncs[INPUT] = cinput;
+	bfuncs[VAR] = cvar;
+	bfuncs[IF] = cif;
+	bfuncs[GOTO] = cgoto;
+	bfuncs[GOSUB] = cgosub;
+	bfuncs[RET] = cret;
+	bfuncs[REM] = crem;
+	mathfuncs[0] = iand;
+	mathfuncs[1] = ior;
+	mathfuncs[2] = igt;
+	mathfuncs[3] = ilt;
+	mathfuncs[4] = ineq;
+	mathfuncs[5] = ieq;
+	mathfuncs[6] = imod;
+	mathfuncs[7] = imul;
+	mathfuncs[8] = idiv;
+	mathfuncs[9] = iadd;
+	mathfuncs[10] = isub;
 
 	//if (argc == 2 && scmp(argv[1], "-emath")) { return emath_test(); }
 	//int f = argv[1] != NULL ? open(argv[1], FD_R) : stdin;
