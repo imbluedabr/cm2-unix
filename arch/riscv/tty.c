@@ -91,18 +91,23 @@ int tty_ioctl(struct device* dev, int cmd, void* arg) {
     if (tty->base.ops == NULL) {
         return 0;
     }
-
-
-    //TODO: implement more ioctl's, create documentation and user facing header, create error code
-    if (cmd == TTY_IOCTL_CLEAR) {
-        tty_interface->clear = 1;
-        tty_interface->cursor_location = 0;
-    } else if (cmd == TTY_IOCTL_SETCURSOR) {
-        uint8_t* location = arg;
-        tty_interface->cursor_location = *location;
-    } else {
-        return_code = -1;
+    
+    switch(cmd) {
+        case TTY_IOCTL_CLEAR:
+            tty_interface->clear = 1;
+            tty_interface->cursor_location = 0;
+            break;
+        case TTY_IOCTL_SETCURSOR:
+            tty_interface->cursor_location = *((uint8_t*) arg);
+            break;
+        case TTY_IOCTL_SETMODE:
+            tty->mode = *((uint16_t*) arg);
+            break;
+        case TTY_IOCTL_GETMODE:
+            return_code = tty->mode;
+            break;
     }
+
     return return_code;
 }
 
@@ -137,7 +142,7 @@ static inline uint8_t tty_read(
         volatile struct tty_hardware_interface* tty_interface
         )
 {
-        
+    
     if (tty_interface->input_ready) {
         char c = tty_interface->input_character;
         uint32_t i = tty->current_bytes_copied;
@@ -145,8 +150,7 @@ static inline uint8_t tty_read(
         if (c == '\r' || c == '\n') {
             tty_interface->cursor_location = (tty_interface->cursor_location + 32) & 0b11100000;
             return 1;
-        }
-        else if (c == 127 || c == 8) {
+        } else if (c == 127 || c == 8) {
         	if (!(i >= 1)) return 0;
             ((char*) current_req->buffer)[--i] = 0;
             tty->current_bytes_copied = i;
@@ -154,8 +158,7 @@ static inline uint8_t tty_read(
             tty_interface->cursor_location--;
             tty_interface->write = 1;
             return 0;
-        }        
-        //TODO: add backspace functionality with "\b \b" response to \b, and add raw mode and echo flag
+        }
 
         //echo character
         tty_interface->character = c;

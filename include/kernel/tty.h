@@ -7,7 +7,8 @@ struct tty_device {
     struct device base;
     volatile struct tty_hardware_interface* tty;
     struct device_request* current_req;
-    uint32_t current_bytes_copied;
+    uint16_t current_bytes_copied;
+    enum : uint16_t { RAW, COOKED } mode;
 };
 
 //register the tty driver
