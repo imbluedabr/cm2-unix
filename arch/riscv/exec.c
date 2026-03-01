@@ -37,7 +37,7 @@ int proc_exec(exe_t* exec_state, struct inode* cwd, const char* path, const char
 
 int proc_exec_update(exe_t* exec_state, struct proc* process)
 {
-    int8_t rt;
+    int rt;
     struct fd* f = &exec_state->descriptor;
     fs_read_t* rstate = &exec_state->fs;
 
@@ -109,7 +109,7 @@ int proc_exec_update(exe_t* exec_state, struct proc* process)
                 
                 new->program_base = program_base;
                 new->program_size = hdr->program_break;
-                rt = new->pid;
+                rt = new->pid + 1;
                 goto exit;
             }
     }

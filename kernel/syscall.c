@@ -290,6 +290,9 @@ void sys_exec_update(struct proc* process)
 {
     int status = proc_exec_update(&process->exec_state, process);
     if (status != 0) {
+        if (status > 0) {
+            status--;
+        }
         proc_resume(process, status);
     }
 }
