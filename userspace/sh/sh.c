@@ -37,6 +37,7 @@ char cwd[FS_PATH_LEN + 1];
 
 int main(const char** argv)
 {
+    
     if (argv != NULL) {
         if (argv[1] != NULL) {
             stdout = open(argv[1], 0);
@@ -98,7 +99,6 @@ int main(const char** argv)
         }
         
     }
-
     return 0;
 }
 

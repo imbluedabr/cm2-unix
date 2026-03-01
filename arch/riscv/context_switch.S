@@ -52,6 +52,7 @@ exit_kernel:
     la t0, current_process
     lw t0, 0(t0)
 
+    #load the return address
     lw ra, 0(t0)
     lw sp, 4(t0)
 
