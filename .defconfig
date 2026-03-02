@@ -1,0 +1,34 @@
+#
+# Automatically generated file; DO NOT EDIT.
+# Configuration
+#
+
+#
+# Architecture
+#
+CONFIG_ARCH_TAURUS=y
+# CONFIG_ARCH_MCXA153 is not set
+
+#
+# Kernel
+#
+CONFIG_ROOTFS_FATFS=y
+# CONFIG_ROOTFS_ROMFS is not set
+CONFIG_ROOTFS_TYPE="fatfs"
+CONFIG_ROOTFS_DEV_MAJ=1
+CONFIG_ROOTFS_DEV_MIN=0
+CONFIG_INIT_PATH="/bin/sh"
+CONFIG_INIT_CONSOLE_DEVNO=0
+
+#
+# File systems
+#
+CONFIG_FS_FATFS=y
+CONFIG_FS_ROMFS=y
+
+#
+# Drivers
+#
+CONFIG_CM2_TTY_DRIVER=y
+CONFIG_CM2_TILING_GPU=y
+CONFIG_CM2_BLOCK_DEV=y

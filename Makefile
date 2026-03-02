@@ -1,7 +1,9 @@
 
 ROOT ?= $(PWD)
 
--include .config
+CONFIG ?= .config
+
+-include $(CONFIG)
 
 SETTINGS_FILE = $(ROOT)/include/kernel/settings.h
 
