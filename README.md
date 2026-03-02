@@ -3,20 +3,28 @@
 
 ![Kernel Build](https://github.com/imbluedabr/cm2-unix/actions/workflows/c-cpp.yml/badge.svg)
 
-CM2-UNIX is an attempt at creating a unix-ish operating system for a rv32i system built in a roblox game called Circuit Maker 2.
+CM2-UNIX was an attempt at creating a unix-ish operating system for an rv32i system built in a roblox game called Circuit Maker 2. But it is now also being ported to run on real hardware like the NXP MCXA153 ARM Microcontrollers.
 
-This is exceptionally hard since the rv32i implementation does not include the privileged architecture or DMA thus we can only ever hope to get cooperative multitasking working, and that's not all, the system only has 64kb of memory and 64kb of external storage. This means that all io operations are PIO and thus extremely slow.
+This is chalanging since the rv32i implementation does not include the privileged architecture or DMA thus we can only ever hope to get cooperative multitasking working, and that's not all, the system only has 64kb of memory and 64kb of external storage. This means that all io operations are PIO and thus extremely slow, but the ports to real hardware will be using interrupts and DMA.
+
+## Dependencies
+
+- GNU Make
+- risc64-unkown-elf toolchain or another one(depending on the target board)
+- Kconfig frontend, on debian this is called kconfig-frontends
+- python 3 (only tested on 3.11)
 
 ## Building
 
 1. Clone the repository.
 2. Navigate to the root of the repo.
-3. run `make image`
-4. profit
+3. run `make menuconfig`
+4. run `make all`
+5. profit
 
 You can also get a compile_commands.json by doing the following in the project root:
 `
-bear -- make
+bear -- make rebuild
 `
 
 ## Running
@@ -27,6 +35,6 @@ bear -- make
 
 ## Contributing
 
-Contributions are very much apreciated, the project is still in the early stages so a lot will change. There is a TODO list with things that should be done and it will hopefully continuously be updated.
+Contributions are very much apreciated, the project is still in the early stages so a lot will change.
 
 
