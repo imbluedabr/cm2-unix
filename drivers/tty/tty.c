@@ -2,7 +2,7 @@
 #include <stdbool.h>
 #include <kernel/device.h>
 #include <uapi/majors.h>
-#include <kernel/tty.h>
+#include <drivers/tty.h>
 #include <arch/riscv/memorymap.h>
 
 

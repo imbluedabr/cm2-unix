@@ -1,0 +1,41 @@
+
+choice
+        prompt "Select rootfs"
+
+config ROOTFS_FATFS
+        bool "FATFS"
+        depends on FS_FATFS
+
+config ROOTFS_ROMFS
+        bool "ROMFS"
+        depends on FS_ROMFS
+
+endchoice
+
+config ROOTFS_TYPE
+        string
+        default "fatfs" if ROOTFS_FATFS
+        default "romfs" if ROOTFS_ROMFS
+        default "none"
+
+config ROOTFS_DEV_MAJ
+        int "rootfs device major"
+        help
+          This is the major number of the device that contains the rootfs
+
+config ROOTFS_DEV_MIN
+        int "rootfs device minor"
+        help
+          This is the minor number of the device that contains the rootfs
+
+
+config INIT_PATH
+        string "Init binary path"
+        default "/bin/sh"
+
+config INIT_CONSOLE_DEVNO
+        int "boot console device number"
+        help
+          This is the device number that identifies the output device for the boot console.
+
+

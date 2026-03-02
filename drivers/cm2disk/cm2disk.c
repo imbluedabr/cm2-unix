@@ -1,5 +1,5 @@
 #include <stddef.h>
-#include <kernel/block.h>
+#include <drivers/cm2disk.h>
 #include <uapi/majors.h>
 #include <lib/kprint.h>
 

@@ -1,0 +1,16 @@
+
+config CM2_TTY_DRIVER
+        bool "Generic TTY driver"
+        depends on ARCH_TAURUS
+
+config CM2_TILING_GPU
+        bool "Tiling GPU driver"
+        depends on ARCH_TAURUS
+
+config CM2_BLOCK_DEV
+        bool "Generic disk driver"
+        depends on ARCH_TAURUS
+
+
+
+

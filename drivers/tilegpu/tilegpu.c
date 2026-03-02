@@ -1,10 +1,9 @@
 #include <stddef.h>
 #include <lib/stdlib.h>
 #include <kernel/device.h>
-#include <kernel/tilegpu.h>
+#include <drivers/tilegpu.h>
 #include <uapi/majors.h>
 
-#include <kernel/tty.h>
 #include <lib/hex.h>
 
 static struct tilegpu_device gpu0;
@@ -49,7 +48,7 @@ int tilegpu_destroy(uint8_t minor)
     //we only will deal with one gpu, so ignore minor.
     struct tilegpu_device *gpu = &gpu0;
     gpu->base.ops = NULL;
-    memset(&gpu->gpu_interface, sizeof(gpu->gpu_interface), 0);
+    memset(&gpu->gpu_interface, 0, sizeof(gpu->gpu_interface));
     return 0;
 }
 

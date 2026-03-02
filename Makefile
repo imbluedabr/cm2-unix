@@ -1,18 +1,66 @@
 
-ARCH ?= riscv
-
-TOOLCHAIN ?= riscv64-unknown-elf
-
 ROOT ?= $(PWD)
+
+-include .config
+
+SETTINGS_FILE = $(ROOT)/include/kernel/settings.h
+
+$(shell echo "#define ROOTFS_DEVNO (($(CONFIG_ROOTFS_DEV_MAJ) << 4) | $(CONFIG_ROOTFS_DEV_MIN))" > $(SETTINGS_FILE))
+$(shell echo "#define ROOTFS_TYPE \"$(CONFIG_ROOTFS_TYPE)\"" >> $(SETTINGS_FILE))
+$(shell echo "#define INIT_PATH \"$(CONFIG_INIT_PATH)\"" >> $(SETTINGS_FILE))
+$(shell echo "#define INIT_CONSOLE_DEVNO $(CONFIG_INIT_CONSOLE_DEVNO)" >> $(SETTINGS_FILE))
+
+ifeq ($(CONFIG_ARCH_TAURUS), y)
+ARCH = riscv
+TOOLCHAIN = riscv64-unknown-elf
+ARCH_CFLAGS = -march=rv32i -mabi=ilp32
+ARCH_LDFLAGS = -march=rv32i -mabi=ilp32
+$(shell echo "#define ARCV_TAURUS" >> $(SETTINGS_FILE))
+endif
+
+ifeq ($(CONFIG_ARCH_MCXA153), y)
+ARCH = arm
+TOOLCHAIN = arm-none-eabi
+ARCH_CFLAGS = 
+ARCH_LDFLAGS =
+$(shell echo "#define ARCV_MCXA153" >> $(SETTINGS_FILE))
+endif
+
+# the filesystems
+FS_SELECT = $(ROOT)/fs/fs.c $(ROOT)/fs/vfs.c $(ROOT)/fs/devfs.c
+
+ifeq ($(CONFIG_FS_FATFS), y)
+FS_SELECT += $(ROOT)/fs/fatfs.c
+$(shell echo "#define FS_FATFS" >> $(SETTINGS_FILE))
+endif
+ifeq ($(CONFIG_FS_ROMFS), y)
+FS_SELECT += $(ROOT)/fs/romfs.c
+$(shell echo "#define FS_ROMFS" >> $(SETTINGS_FILE))
+endif
+
+DEV_SELECT = 
+
+ifeq ($(CONFIG_CM2_BLOCK_DEV), y)
+DEV_SELECT += $(ROOT)/drivers/cm2disk/cm2disk.c
+$(shell echo "#define CM2_BLOCK_DEV" >> $(SETTINGS_FILE))
+endif
+ifeq ($(CONFIG_CM2_TILING_GPU), y)
+DEV_SELECT += $(ROOT)/drivers/tilegpu/tilegpu.c
+$(shell echo "#define CM2_TILING_GPU" >> $(SETTINGS_FILE))
+endif
+ifeq ($(CONFIG_CM2_TTY_DRIVER), y)
+DEV_SELECT += $(ROOT)/drivers/tty/tty.c
+$(shell echo "#define CM2_TTY_DRIVER" >> $(SETTINGS_FILE))
+endif
+
+
 
 RAYLIB ?= true
 EMULATOR ?= $(ROOT)/emulator/riscv/cm2-riscv-emulator
 
-# the filesystems
-FS_SELECT = $(ROOT)/fs/fs.c $(ROOT)/fs/vfs.c $(ROOT)/fs/devfs.c $(ROOT)/fs/fatfs.c
-
 #source files
 CSRCS = $(FS_SELECT) \
+		$(DEV_SELECT) \
 	   $(wildcard $(ROOT)/kernel/*.c) \
 	   $(wildcard $(ROOT)/arch/$(ARCH)/*.c) \
 	   $(wildcard $(ROOT)/lib/*.c)
@@ -35,19 +83,18 @@ MN_FILE ?= main.elf
 
 DEBUG ?= false
 
-CFLAGS = -march=rv32i -mabi=ilp32 -ffreestanding -Wall -Wextra -Wno-unused-parameter -g -fverbose-asm $(INCL)
+CFLAGS = $(ARCH_CFLAGS) -ffreestanding -Wall -Wextra -Wno-unused-parameter -g -fverbose-asm $(INCL)
 ASFLAGS = $(CFLAGS)
-LDFLAGS = -nostdlib -nostartfiles -static -march=rv32i -mabi=ilp32
+LDFLAGS = $(ARCH_LDFLAGS) -nostdlib -nostartfiles -static
 
 
 ifeq ($(DEBUG), true)
-	CFLAGS += -g -fstack-protector-all -fverbose-asm -O2 -D__DEBUG__
-	LDFLAGS += -O2
-else
-	CFLAGS += -Os -flto
-	LDFLAGS += -Os -flto
-	ASFLAGS += -fno-lto
+	CFLAGS += -fstack-protector-all -D__DEBUG__
 endif
+
+CFLAGS += -Os -flto
+LDFLAGS += -Os -flto
+ASFLAGS += -fno-lto
 
 
 OBJS = $(CSRCS:%.c=%.o) $(ASRCS:%.S=%.o)
@@ -56,7 +103,7 @@ CC = $(TOOLCHAIN)-gcc
 OBJCOPY = $(TOOLCHAIN)-objcopy
 READELF = $(TOOLCHAIN)-readelf
 
-.PHONY: userspace
+.PHONY: userspace settings
 
 %.o: %.c
 	$(CC) $(CFLAGS) -c $< -o $@
@@ -64,7 +111,8 @@ READELF = $(TOOLCHAIN)-readelf
 %.o: %.S
 	$(CC) $(CFLAGS) -c $< -o $@
 
-$(MN_FILE): $(OBJS)
+
+$(MN_FILE): $(OBJS) settings
 	$(CC) $(LDFLAGS) -T $(LNKF) $(OBJS) -o $@
 
 image: $(MN_FILE)
@@ -104,6 +152,10 @@ clean:
 	rm -rf verbose_dump.s.dump
 	$(MAKE) -C $(USERSPACE) ROOT=$(USERSPACE) STAGING=$(STAGING) TOOLCHAIN=$(TOOLCHAIN) KERNEL_HEADERS=$(ROOT)/include/uapi clean
 
-rebuild: clean userspace image size
+all: userspace image size
 
+rebuild: clean all
+
+menuconfig:
+	kconfig-mconf ./Kconfig
 

@@ -1,0 +1,18 @@
+
+choice
+        prompt "Select target board"
+        default ARCH_TAURUS
+
+config ARCH_TAURUS
+        bool "Taurus risc-v system"
+        help
+          Target the Taurus rv32i system made in roblox
+
+config ARCH_MCXA153
+        bool "NXP MCXA153 ARM Cortex-M MCU"
+        help
+          Target the MCXA153 FRDM development board
+
+endchoice
+
+

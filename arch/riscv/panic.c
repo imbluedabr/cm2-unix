@@ -1,6 +1,5 @@
 #include <lib/stdlib.h>
 #include <lib/hex.h>
-#include <kernel/tty.h>
 #include <kernel/proc.h>
 #include <lib/kprint.h>
 

@@ -1,0 +1,27 @@
+
+
+menu "Architecture"
+
+source ./arch/Kconfig
+
+endmenu
+
+menu "Kernel"
+
+source ./kernel/Kconfig
+
+endmenu
+
+menu "File systems"
+
+source ./fs/Kconfig
+
+endmenu
+
+
+menu "Drivers"
+
+source ./drivers/Kconfig
+
+endmenu
+
