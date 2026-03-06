@@ -44,14 +44,17 @@ int8_t devfs_lookup(fs_lookup_t* state)
     return -1;
 }
 
+void devfs_init()
+{
+    for (int i = 0; i < DEVFS_MAX_FILES; i++) {
+        devfs.files[i].devno = 255;
+    }
+}
 
 int devfs_mount(struct inode* mountpoint, dev_t devno, const char* args)
 {
     mountpoint->file = DEVFS_CREATE_INO(DEVFS_MAX_FILES);
     mountpoint->fs = &devfs.base;
-    for (int i = 0; i < DEVFS_MAX_FILES; i++) {
-        devfs.files[i].devno = 255;
-    }
     return 0;
 }
 

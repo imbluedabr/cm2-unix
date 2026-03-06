@@ -50,12 +50,15 @@ int strncpy(char* dest, char* src, uint32_t size)
     return i;
 }
 
-void strlcpy(char* dest, char* src, uint32_t size)
+int strlcpy(char* dest, char* src, uint32_t size)
 {
+    int i = 0;
     while((*src != '\0') && (size-- > 0)) {
         *(dest++) = *(src++);
+        i++;
     }
     *dest = '\0';
+    return i;
 }
 
 

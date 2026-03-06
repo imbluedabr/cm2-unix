@@ -67,11 +67,11 @@ int main(const char** argv)
         if (strncmp(new_argv[0], "exit", LINE_SIZE) == 0) {
             break;
         } else if (strncmp(new_argv[0], "clear", LINE_SIZE) == 0) {
-            ioctl(stdout, TTY_IOCTL_CLEAR, NULL);
+            puts("\e[J");
         } else if (strncmp(new_argv[0], "cd", LINE_SIZE) == 0) {
             if (new_argv[1] == NULL) {
                 puts("cd: missing argument\n");
-            } else if (chdir(argv[1]) < 0) {
+            } else if (chdir(new_argv[1]) < 0) {
                 puts("cd: path not found\n");
             }
         } else {

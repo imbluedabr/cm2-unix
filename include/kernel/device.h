@@ -28,6 +28,8 @@ struct device_driver {
 };
 
 struct device_ops {
+    int (*readb)(struct device* dev);
+    int (*writeb)(struct device* dev, uint8_t val);
     int (*ioctl)(struct device* dev, int cmd, void* arg);
     void (*update)(struct device* dev);
 };

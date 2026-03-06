@@ -18,6 +18,7 @@ struct devfs_superblock {
 extern const struct super_ops devfs_sops;
 extern const struct file_ops devfs_fops;
 
+void devfs_init();
 int8_t devfs_lookup(fs_lookup_t* state);
 int devfs_mount(struct inode* mountpoint, dev_t devno, const char* args);
 

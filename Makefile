@@ -46,16 +46,26 @@ ifeq ($(CONFIG_CM2_BLOCK_DEV), y)
 DEV_SELECT += $(ROOT)/drivers/cm2disk/cm2disk.c
 $(shell echo "#define CM2_BLOCK_DEV" >> $(SETTINGS_FILE))
 endif
+
 ifeq ($(CONFIG_CM2_TILING_GPU), y)
 DEV_SELECT += $(ROOT)/drivers/tilegpu/tilegpu.c
 $(shell echo "#define CM2_TILING_GPU" >> $(SETTINGS_FILE))
 endif
-ifeq ($(CONFIG_CM2_TTY_DRIVER), y)
+
+ifeq ($(CONFIG_TTY_DRIVER), y)
 DEV_SELECT += $(ROOT)/drivers/tty/tty.c
-$(shell echo "#define CM2_TTY_DRIVER" >> $(SETTINGS_FILE))
+$(shell echo "#define TTY_DRIVER" >> $(SETTINGS_FILE))
 endif
 
+ifeq ($(CONFIG_USART_DRIVER), y)
+DEV_SELECT += $(ROOT)/drivers/USART/usart.c
+$(shell echo "#define USART_DRIVER" >> $(SETTINGS_FILE))
+endif
 
+ifeq ($(CONFIG_USART_DRIVER_CM2CON), y)
+DEV_SELECT += $(ROOT)/drivers/USART/cm2_con.c
+$(shell echo "#define USART_DRIVER_CM2CON" >> $(SETTINGS_FILE))
+endif
 
 RAYLIB ?= true
 EMULATOR ?= $(ROOT)/emulator/riscv/cm2-riscv-emulator

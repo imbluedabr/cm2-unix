@@ -2,10 +2,13 @@
 #include <lib/stdlib.h>
 
 #include <kernel/device.h>
+#include <drivers/usart.h>
+#include <uapi/tty.h>
 #include <drivers/tty.h>
 #include <drivers/cm2disk.h>
 #include <drivers/tilegpu.h>
 #include <uapi/majors.h>
+#include <kernel/devtbl.h>
 #include <kernel/proc.h>
 #include <kernel/exec.h>
 #include <kernel/syscall.h>
@@ -18,19 +21,61 @@
 #include <fs/fatfs.h>
 
 void main() {
-    dev_t tty0_devno, tty1_devno, gpu0_devno, disk0_devno;
     
+    device_node_t devconfig[] = {
+        {
+            .major = USART_MAJOR,
+            .arg = &(struct usart_desc) {
+                .base = (void*) 0xFFF1,
+                .device_id = 0
+            }
+        },
+        {
+            .major = TTY_MAJOR,
+            .arg = &(struct tty_desc) {
+                .read_dev = MKDEV(USART_MAJOR, 0),
+                .write_dev = MKDEV(USART_MAJOR, 0)
+            }
+        },
+        {
+            .major = GEN_DISK_MAJOR,
+            .arg = (void*) 0xFFC3
+        },
+        {
+            .major = TILEGPU_MAJOR,
+            .arg = &(struct tilegpu_hw_interface) {
+                .controls = TILEGPU_CONTROLS,
+                .fx_imm = TILEGPU_FX_IMM,
+                .fx_opcode = TILEGPU_FX_OPCODE,
+                .tile_id = TILEGPU_ADDR,
+                .y = TILEGPU_Y,
+                .x = TILEGPU_X
+            }
+        }
+    };
+        
     //initialize functions
     device_init();
     proc_init();
     fs_init();
+    devfs_init();
 
-#ifdef CM2_TTY_DRIVER
+#ifdef USART_DRIVER
+    usart_init();
+#endif
+#ifdef TTY_DRIVER
     tty_init();
-    device_create(&tty0_devno, TTY_MAJOR, (void*) 0xFFF1);
-    device_create(&tty1_devno, TTY_MAJOR, (void*) 0xFFBD);
+#endif
+#ifdef CM2_BLOCK_DEV
+    gen_disk_init();
 #endif
 #ifdef CM2_TILING_GPU
+    tilegpu_init();
+#endif
+    
+    devtbl_init(devconfig, 3);
+
+/*
     tilegpu_init();
     device_create(&gpu0_devno, TILEGPU_MAJOR, &(struct tilegpu_hw_interface){
         .controls = TILEGPU_CONTROLS,
@@ -40,11 +85,7 @@ void main() {
         .y = TILEGPU_Y,
         .x = TILEGPU_X
     });
-#endif
-#ifdef CM2_BLOCK_DEV
-    gen_disk_init();
-    device_create(&disk0_devno, GEN_DISK_MAJOR, (void*) 0xFFC3);
-#endif
+*/
 
     kputs(uname);
    
@@ -60,17 +101,7 @@ void main() {
     if (mount_devfs("devfs") < 0) {
         panic("devfs mount failed");
     }
-    kputs("mounted filesystems!\n");
-    
-    devfs_create_handle("disk0", disk0_devno);
-    devfs_create_handle("tty0", tty0_devno);
-    devfs_create_handle("tty1", tty1_devno);
-
-#ifdef CM2_TILING_GPU
-    devfs_create_handle("gpu0", gpu0_devno);
-#endif
-
-    kputs("populated devfs!\nstarting init...\n");
+    kputs("Mounted filesystems!\nStarting init...\n");
     
     //exec the init process
     struct proc* boot = &process_table[0];
