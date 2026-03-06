@@ -1,15 +1,14 @@
-#pragma once
-
+#include <uapi/tty.h>
 #include <kernel/device.h>
 
+struct tty_hardware_interface;
 
 struct tty_device {
     struct device base;
-    struct device* read_dev;
-    struct device* write_dev;
+    volatile struct tty_hardware_interface* tty;
     struct device_request* current_req;
-    uint16_t bytes_copied;
-    uint16_t mode;
+    uint16_t current_bytes_copied;
+    enum : uint16_t { RAW, COOKED } mode;
 };
 
 //register the tty driver
@@ -29,6 +28,3 @@ void tty_global_update();
 int tty_ioctl(struct device* dev, int cmd, void* arg);
 
 void tty_update(struct device* dev);
-
-
-

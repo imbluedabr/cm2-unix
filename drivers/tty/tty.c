@@ -1,20 +1,8 @@
-#include <stddef.h>
-#include <stdbool.h>
-#include <kernel/device.h>
-#include <uapi/majors.h>
 #include <drivers/tty.h>
-#include <arch/riscv/memorymap.h>
-
-
-//the hardware interface implementation
-struct tty_hardware_interface {
-    char input_character;
-    uint8_t input_ready;
-    uint8_t clear;
-    uint8_t write;
-    char character;
-    uint8_t cursor_location;
-};
+#include <uapi/majors.h>
+#include <uapi/tty.h>
+#include <lib/kprint.h>
+#include <stddef.h>
 
 //this is the table that stores the tty instances
 #define MAX_TTY_COUNT 2
@@ -33,20 +21,22 @@ void tty_init() {
     tty_driver->destroy = &tty_destroy;
     tty_driver->lookup = &tty_lookup;
     tty_driver->update = &tty_global_update;
-    tty_driver->name = "generic tty";
+    tty_driver->name = "tty driver";
 }
 
 //create a tty instance
 struct device* tty_create(int8_t* minor, const void* args)
 {
+    const struct tty_desc* desc = args;
     for (int8_t i = 0; i < MAX_TTY_COUNT; i++) {
         struct tty_device* tty = &tty_table[i];
         if (tty->base.ops == NULL) {
             tty->base.ops = (struct device_ops*) &tty_ops;
-            tty->tty = (struct tty_hardware_interface*) args;
             tty->base.count = 0; //init queue
             tty->base.head = 0;
             tty->base.tail = 0;
+            tty->read_dev = device_lookup(desc->read_dev);
+            tty->write_dev = device_lookup(desc->write_dev);
             *minor = i;
             return &tty->base;
         }
@@ -60,7 +50,6 @@ int tty_destroy(uint8_t minor)
 {
     struct tty_device* tty = &tty_table[minor & MAX_TTY_MSK];
     tty->base.ops = NULL;
-    tty->tty = NULL;
     return 0;
 }
 
@@ -85,7 +74,6 @@ void tty_global_update() {
 
 int tty_ioctl(struct device* dev, int cmd, void* arg) {
     struct tty_device* tty = (struct tty_device*) dev;
-    volatile struct tty_hardware_interface* tty_interface = tty->tty;
     int return_code = 0;
 
     if (tty->base.ops == NULL) {
@@ -93,13 +81,6 @@ int tty_ioctl(struct device* dev, int cmd, void* arg) {
     }
     
     switch(cmd) {
-        case TTY_IOCTL_CLEAR:
-            tty_interface->clear = 1;
-            tty_interface->cursor_location = 0;
-            break;
-        case TTY_IOCTL_SETCURSOR:
-            tty_interface->cursor_location = *((uint8_t*) arg);
-            break;
         case TTY_IOCTL_SETMODE:
             tty->mode = *((uint16_t*) arg);
             break;
@@ -111,76 +92,56 @@ int tty_ioctl(struct device* dev, int cmd, void* arg) {
     return return_code;
 }
 
-static inline uint8_t tty_write(
-        struct tty_device* tty,
-        struct device_request* current_req,
-        volatile struct tty_hardware_interface* tty_interface
-        )
-{
-    uint32_t i = tty->current_bytes_copied;
-    char c = ((char*) current_req->buffer)[i];
 
-    if (c == '\n' || tty_interface->cursor_location == 255) {
-        tty_interface->cursor_location = (tty_interface->cursor_location + 32) & 0b11100000;
-    } else {
-        tty_interface->character = c;
-        tty_interface->write = 1;
-        tty_interface->cursor_location++;
+static void tty_read(struct tty_device* tty, struct device_request* req)
+{
+    struct device* read_dev = tty->read_dev;
+    if (!read_dev || !read_dev->ops->readb) {
+        goto end;
     }
 
-    tty->current_bytes_copied = ++i;
-
-    if (i == current_req->count) {
-        return 1;
-    }
-    return 0;
-}
-
-static inline uint8_t tty_read(
-        struct tty_device* tty,
-        struct device_request* current_req,
-        volatile struct tty_hardware_interface* tty_interface
-        )
-{
+    struct device* write_dev = tty->write_dev;
     
-    if (tty_interface->input_ready) {
-        char c = tty_interface->input_character;
-        uint32_t i = tty->current_bytes_copied;
-
-        if (c == '\r' || c == '\n') {
-            tty_interface->cursor_location = (tty_interface->cursor_location + 32) & 0b11100000;
-            return 1;
-        } else if (c == 127 || c == 8) {
-        	if (!(i >= 1)) return 0;
-            ((char*) current_req->buffer)[--i] = 0;
-            tty->current_bytes_copied = i;
-            tty_interface->character = ' ';
-            tty_interface->cursor_location--;
-            tty_interface->write = 1;
-            return 0;
+    int c = read_dev->ops->readb(read_dev);
+    if (c >= 0) {
+        if (c == 0x7F) { //quick fix since sometimes backspace is DEL instead of '\b'
+            c = '\b';
         }
+        if (c == '\b') {
+            if (tty->bytes_copied == 0) {
+                return;
+            }
+            write_dev->ops->writeb(write_dev, '\b');
+            write_dev->ops->writeb(write_dev, ' ');
+            tty->bytes_copied--;
+        }
+        write_dev->ops->writeb(write_dev, c);
 
-        //echo character
-        tty_interface->character = c;
-        tty_interface->write = 1;
-        tty_interface->cursor_location++;
+        if (c == '\n') {
+            goto end;
+        } else if (c == '\b') {
+            return;
+        }
         
-        ((char*) current_req->buffer)[i++] = c;
-        tty->current_bytes_copied = i;
         
-        if (i == current_req->count) {
-            return 1;
+        int i = tty->bytes_copied;
+        ((uint8_t*) req->buffer)[i] = c;
+        tty->bytes_copied = ++i;
+        if (i > req->count) {
+            goto end;
         }
     }
-
-    return 0;
+    return;
+end:
+    req->state = DEVICE_STATE_FINISHED;
+    req->count = tty->bytes_copied;
+    tty->current_req = NULL;
+    return;
 }
-
 
 void tty_update(struct device* dev)
 {
     struct tty_device* tty = (struct tty_device*) dev;
-    volatile struct tty_hardware_interface* tty_interface = tty->tty;
     struct device_request* current_req = tty->current_req;
 
     if (current_req == NULL) {
@@ -189,20 +150,32 @@ void tty_update(struct device* dev)
             return;
 
         tty->current_req = current_req;
-        tty->current_bytes_copied = 0;
+        tty->bytes_copied = 0;
     }
     
-    uint8_t exit;
     if (current_req->operation == DEVICE_OP_WR) {
-        exit = tty_write(tty, current_req, tty_interface);
-    } else {
-        exit = tty_read(tty, current_req, tty_interface);
-    }
+        
+        //pass the request on to the write device
+        if(device_queue_action(tty->write_dev, current_req) == 0) {//if we succesfully passed on the request we set the current request to null
+            tty->current_req = NULL;
+        }
 
-    if (exit) {
-        current_req->state = DEVICE_STATE_FINISHED;
-        current_req->count = tty->current_bytes_copied;
-        tty->current_req = NULL;
+    } else {
+        tty_read(tty, current_req);
     }
 
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
