@@ -17,15 +17,15 @@ ARCH = riscv
 TOOLCHAIN = riscv64-unknown-elf
 ARCH_CFLAGS = -march=rv32i -mabi=ilp32
 ARCH_LDFLAGS = -march=rv32i -mabi=ilp32
-$(shell echo "#define ARCV_TAURUS" >> $(SETTINGS_FILE))
+$(shell echo "#define ARCH_TAURUS" >> $(SETTINGS_FILE))
 endif
 
 ifeq ($(CONFIG_ARCH_MCXA153), y)
-ARCH = arm
-TOOLCHAIN = arm-none-eabi
-ARCH_CFLAGS = 
+ARCH = mcxa153
+TOOLCHAIN = ~/arm-gnu-toolchain-15.2.rel1-x86_64-arm-none-eabi/bin/arm-none-eabi
+ARCH_CFLAGS = -mcpu=cortex-m33 -mthumb -std=gnu11 -DCPU_MCXA153VFM
 ARCH_LDFLAGS =
-$(shell echo "#define ARCV_MCXA153" >> $(SETTINGS_FILE))
+$(shell echo "#define ARCH_MCXA153" >> $(SETTINGS_FILE))
 endif
 
 # the filesystems
@@ -95,19 +95,23 @@ MN_FILE ?= main.elf
 
 DEBUG ?= false
 
-CFLAGS = $(ARCH_CFLAGS) -ffreestanding -Wall -Wextra -Wno-unused-parameter -g -fverbose-asm $(INCL)
+CFLAGS = $(ARCH_CFLAGS) -ffreestanding -Wall -Wextra -Wno-unused-parameter  $(INCL)
 ASFLAGS = $(CFLAGS)
 LDFLAGS = $(ARCH_LDFLAGS) -nostdlib -nostartfiles -static
 
 
 ifeq ($(DEBUG), true)
-	CFLAGS += -fstack-protector-all -D__DEBUG__
+	CFLAGS += -D__DEBUG__ -g -fverbose-asm
 endif
 
-CFLAGS += -Os -flto
-LDFLAGS += -Os -flto
+CFLAGS += -Os
+LDFLAGS += -Os
 ASFLAGS += -fno-lto
 
+ifeq ($(CONFIG_LTO), y)
+CFLAGS += -flto
+LDFLAGS += -flto
+endif
 
 OBJS = $(CSRCS:%.c=%.o) $(ASRCS:%.S=%.o)
 
@@ -115,13 +119,13 @@ CC = $(TOOLCHAIN)-gcc
 OBJCOPY = $(TOOLCHAIN)-objcopy
 READELF = $(TOOLCHAIN)-readelf
 
-.PHONY: userspace settings
+.PHONY: userspace settings install
 
 %.o: %.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
 %.o: %.S
-	$(CC) $(CFLAGS) -c $< -o $@
+	$(CC) $(ASFLAGS) -c $< -o $@
 
 
 $(MN_FILE): $(OBJS) settings
@@ -129,8 +133,9 @@ $(MN_FILE): $(OBJS) settings
 
 image: $(MN_FILE)
 	$(OBJCOPY) -O binary $(MN_FILE) image.bin
+ifeq ($(CONFIG_ARCH_TAURUS), y)
 	/bin/env python3 $(ROOT)/scripts/$(ARCH)_encoder.py image.bin
-
+endif
 
 STAGING = $(ROOT)/staging
 USERSPACE = $(ROOT)/userspace
@@ -164,9 +169,13 @@ clean:
 	rm -rf verbose_dump.s.dump
 	$(MAKE) -C $(USERSPACE) ROOT=$(USERSPACE) STAGING=$(STAGING) TOOLCHAIN=$(TOOLCHAIN) KERNEL_HEADERS=$(ROOT)/include/uapi clean
 
-all: userspace image size
+all: image size
 
 rebuild: clean all
+
+install:
+	pyocd list
+	pyocd load --format elf $(MN_FILE)
 
 menuconfig:
 	kconfig-mconf ./Kconfig

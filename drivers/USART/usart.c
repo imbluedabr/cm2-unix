@@ -1,9 +1,11 @@
 #include <stddef.h>
 #include <stdbool.h>
+#include <lib/stdlib.h>
 #include <kernel/device.h>
 #include <uapi/majors.h>
 #include <drivers/usart.h>
 #include "cm2_con.h"
+#include "mcxa153_lpuart.h"
 
 //this is the table that stores the tty instances
 #define MAX_USART_COUNT 2
@@ -17,6 +19,14 @@ const struct device_ops usart_backends[] = {
         .writeb = &cm2con_writeb,
         .ioctl = &cm2con_ioctl,
         .update = &cm2con_update
+    }
+#endif
+#ifdef USART_DRIVER_MCXA
+    {
+        .readb = &mcxa_lpuart_readb,
+        .writeb = &mcxa_lpuart_writeb,
+        .ioctl = &mcxa_lpuart_ioctl,
+        .update = &mcxa_lpuart_update
     }
 #endif
 };
@@ -37,11 +47,10 @@ struct device* usart_create(int8_t* minor, const void* args)
     for (int8_t i = 0; i < MAX_USART_COUNT; i++) {
         struct usart_device* usart = &usart_table[i];
         if (!usart->base.ops) {
+            memset(usart, 0, sizeof(struct usart_device));
             usart->base.ops = (struct device_ops*) &usart_backends[desc->device_id];
-            usart->base.count = 0; //init queue
-            usart->base.head = 0;
-            usart->base.tail = 0;
             usart->usart_base = desc->base;
+            usart->base.ops->ioctl(&usart->base, IOCTL_RESET, (void*) args);
             *minor = i;
             return &usart->base;
         }

@@ -1,34 +1,21 @@
+#include <lib/kprint.h>
 #include <stdint.h>
 #include <stdarg.h>
-#include <arch/riscv/memorymap.h>
-
 #include <lib/hex.h>
+
+
+struct device* console;
 
 void kputc(char c)
 {
-    if (c == '\n')
-    {
-        *TTY_LOC = ((*TTY_LOC + 32) & 0b11100000);
-        *TTY_CHAR = c;
-        return;
-    }
-    else (*TTY_LOC)++;;
-    *TTY_CHAR = c;
-    *TTY_WRITE = 1;
+    console->ops->writeb(console, c);
 }
 
 void kputs(const char *str)
 {
-    uint8_t i = 0;
-    while (str[i] != '\0')
+    while (*str != '\0')
     {
-        if (str[i] == '\n' || *TTY_LOC == 255)
-        {
-            *TTY_LOC = ((*TTY_LOC + 32) & 0b11100000);
-        }
-        else (*TTY_LOC)++;;
-        *TTY_CHAR = str[i++];
-        *TTY_WRITE = 1;
+        console->ops->writeb(console, *str++);
     }
 }
 
@@ -52,7 +39,7 @@ void kprintf(const char *fmt, ...)
             }
             else if (*fmt == 'x') {
                 int num = va_arg(params, int);
-                char *hex = u32_to_hex(num);
+                const char *hex = u32_to_hex(num);
                 kputs(hex);
             }
         }

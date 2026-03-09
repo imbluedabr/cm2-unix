@@ -5,20 +5,22 @@
 
 #define MAX_ALLOCATIONS 8
 
-extern uint8_t _heap_start[];
+uint8_t* heap_start;
 
 static int allocations_size = 1;
 static struct {
     void *block;
     size_t size;
     bool occupied;
-} allocations[MAX_ALLOCATIONS] = {
-    {
-        .block = _heap_start,
-        .size = 0,
-        .occupied = false
-    }
-};
+} allocations[MAX_ALLOCATIONS];
+
+void heap_init(uint8_t* base)
+{
+    heap_start = base;
+    allocations[0].block = base;
+    allocations[0].size = 0;
+    allocations[0].occupied = false;
+}
 
 void *malloc(size_t size)
 {

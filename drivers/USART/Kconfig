@@ -1,0 +1,22 @@
+
+
+config USART_DRIVER_CM2CON
+        bool "cm2 console driver"
+        depends on ARCH_TAURUS
+
+config USART_DRIVER_MCXA
+        bool "mcxa153 lpuart driver"
+        depends on ARCH_MCXA153
+
+config USART_TX_BUFFER_SIZE
+        int "TX buffer size"
+        default 16
+
+config USART_RX_BUFFER_SIZE
+        int "RX buffer size"
+        default 16
+
+config USART_MAX_COUNT
+        int "USART Count"
+        default 2
+

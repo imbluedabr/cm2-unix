@@ -6,9 +6,7 @@ menuconfig USART_DRIVER
         bool "USART driver"
 if USART_DRIVER
 
-config USART_DRIVER_CM2CON
-        bool "cm2 console driver"
-        depends on ARCH_TAURUS
+source ./drivers/USART/Kconfig
 
 endif
 

@@ -3,6 +3,8 @@
 struct usart_desc {
     void* base;
     int device_id;
+    int baudrate;
+    int irq;
 };
 
 
@@ -12,6 +14,12 @@ struct usart_device {
     void* usart_base;
     uint16_t bytes_copied;
     uint16_t mode;
+    char rx_buff[16];
+    char tx_buff[16];
+    uint8_t rx_head;
+    uint8_t rx_tail;
+    uint8_t tx_head;
+    uint8_t tx_tail;
 };
 
 void usart_init();

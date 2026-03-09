@@ -15,4 +15,7 @@ config ARCH_MCXA153
 
 endchoice
 
-
+config LTO
+        bool "LTO(Link Time Optimization)"
+        help
+          Compile with LTO, Currently still experimental on ARM

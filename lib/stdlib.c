@@ -11,7 +11,7 @@ uint32_t strlen(const char* str)
 
 uint32_t strnlen(const char* str, uint32_t max_size)
 {
-    int size = 0;
+    uint32_t size = 0;
     while (*str++ != '\0') {
         if (size > max_size) {
             break;
