@@ -6,5 +6,6 @@
 *.dump
 *.img
 *.conf*
+*.old
 staging
 include/kernel/settings.h
