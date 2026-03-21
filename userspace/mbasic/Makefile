@@ -24,6 +24,7 @@ mbasic: basic.o
 
 install:
 	cp mbasic.bin $(STAGING)/bin/mbasic
+	cp fizzbuzz.bas $(STAGING)/fzbz.bas
 
 clean:
 	rm -rf mbasic.o mbasic.elf

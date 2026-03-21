@@ -194,16 +194,6 @@ void read_program(int stream)
 	}
 }
 
-// Used for testing
-int emath_test()
-{
-	puts("Math evaluation mode.");
-
-	char buffer[64];
-	while (fgets(buffer, 63, stdin)) printf(" = %x\n", emath(buffer));
-	return 0;
-}
-
 int main(const char** argv)
 {
 	initprgm();
@@ -230,11 +220,10 @@ int main(const char** argv)
 	mathfuncs[9] = iadd;
 	mathfuncs[10] = isub;
 
-	//if (argc == 2 && scmp(argv[1], "-emath")) { return emath_test(); }
-	//int f = argv[1] != NULL ? open(argv[1], FD_R) : stdin;
-	//if (f == -1) berror(-1, "FILE UNREADABLE");
+	int f = (argv[1] != NULL) ? open(argv[1], FD_R) : stdin;
+	if (f == -1) berror(-1, "FILE UNREADABLE");
 	
-	read_program(stdin);
+	read_program(f);
 	run_basic();
 	return 0;
 }
