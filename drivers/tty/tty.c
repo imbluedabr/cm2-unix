@@ -133,6 +133,7 @@ static void tty_read(struct tty_device* tty, struct device_request* req)
     }
     return;
 end:
+    ((uint8_t*) req->buffer)[tty->bytes_copied] = '\0'; //make sure to end with a null
     req->state = DEVICE_STATE_FINISHED;
     req->count = tty->bytes_copied;
     tty->current_req = NULL;
