@@ -8,14 +8,15 @@ struct device* console;
 
 void kputc(char c)
 {
-    console->ops->writeb(console, c);
+    while(console->ops->writeb(console, c) == -1);
 }
 
 void kputs(const char *str)
 {
     while (*str != '\0')
     {
-        console->ops->writeb(console, *str++);
+        while(console->ops->writeb(console, *str) == -1);
+        str++;
     }
 }
 
