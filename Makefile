@@ -11,6 +11,8 @@ $(shell echo "#define ROOTFS_DEVNO (($(CONFIG_ROOTFS_DEV_MAJ) << 4) | $(CONFIG_R
 $(shell echo "#define ROOTFS_TYPE \"$(CONFIG_ROOTFS_TYPE)\"" >> $(SETTINGS_FILE))
 $(shell echo "#define INIT_PATH \"$(CONFIG_INIT_PATH)\"" >> $(SETTINGS_FILE))
 $(shell echo "#define INIT_CONSOLE_DEVNO $(CONFIG_INIT_CONSOLE_DEVNO)" >> $(SETTINGS_FILE))
+$(shell echo "#define ARCH_TYPE \"$(CONFIG_ARCH_TYPE)\"" >> $(SETTINGS_FILE))
+
 
 ifeq ($(CONFIG_ARCH_TAURUS), y)
 ARCH = riscv
@@ -67,6 +69,16 @@ DEV_SELECT += $(ROOT)/drivers/USART/cm2_con.c
 $(shell echo "#define USART_DRIVER_CM2CON" >> $(SETTINGS_FILE))
 endif
 
+ifeq ($(CONFIG_USART_DRIVER_MCXA), y)
+DEV_SELECT += $(ROOT)/drivers/USART/mcxa153_lpuart.c
+$(shell echo "#define USART_DRIVER_MCXA" >> $(SETTINGS_FILE))
+endif
+
+ifeq ($(CONFIG_ST7920_DRIVER), y)
+DEV_SELECT += $(ROOT)/drivers/ST7920/ST7920.c
+$(shell echo "#define ST7920_DRIVER" >> $(SETTINGS_FILE))
+endif
+
 RAYLIB ?= true
 EMULATOR ?= $(ROOT)/emulator/riscv/cm2-riscv-emulator
 
@@ -91,16 +103,14 @@ LNKP ?=
 MN_FILE ?= main.elf
 
 # IF debugging stack faliures:
-# make DEBUG=true
-
-DEBUG ?= false
+# make CONFIG_DEBUG=y
 
 CFLAGS = $(ARCH_CFLAGS) -ffreestanding -Wall -Wextra -Wno-unused-parameter  $(INCL)
 ASFLAGS = $(CFLAGS)
 LDFLAGS = $(ARCH_LDFLAGS) -nostdlib -nostartfiles -static
 
 
-ifeq ($(DEBUG), true)
+ifeq ($(CONFIG_DEBUG), y)
 	CFLAGS += -D__DEBUG__ -g -fverbose-asm
 endif
 
@@ -141,6 +151,7 @@ STAGING = $(ROOT)/staging
 USERSPACE = $(ROOT)/userspace
 
 userspace:
+	rm -rf $(STAGING)
 	mkdir -p $(STAGING)
 	mkdir -p $(STAGING)/dev
 	mkdir -p $(STAGING)/bin
@@ -174,8 +185,19 @@ all: image size
 rebuild: clean all
 
 install:
+ifeq ($(CONFIG_ARCH_MCXA153), y)
 	pyocd list
 	pyocd load --format elf $(MN_FILE)
+endif
+
+debug:
+ifeq ($(CONFIG_DEBUG), y)
+	pyocd gdbserver > /dev/null 2>&1 &
+	$(TOOLCHAIN)-gdb
+endif
+
+monitor:
+	sudo minicom -b 9600 --dev /dev/ttyACM0
 
 menuconfig:
 	kconfig-mconf ./Kconfig

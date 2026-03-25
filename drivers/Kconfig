@@ -18,6 +18,8 @@ config CM2_BLOCK_DEV
         bool "Generic disk driver"
         depends on ARCH_TAURUS
 
-
+config ST7920_DRIVER
+        bool "ST7920 Display driver"
+        depends on ARCH_MCXA153
 
 

@@ -15,7 +15,18 @@ config ARCH_MCXA153
 
 endchoice
 
+config ARCH_TYPE
+        string
+        default "TAURUS" if ARCH_TAURUS
+        default "ARMv8-M" if ARCH_MCXA153
+        default "none"
+
 config LTO
         bool "LTO(Link Time Optimization)"
         help
           Compile with LTO, Currently still experimental on ARM
+config DEBUG
+        bool "Build with debugging"
+        depends on !ARCH_TAURUS
+        help
+          Build the kernel with debugging symbols and launch a gdb server. Not suported on Taurus
