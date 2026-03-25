@@ -1,44 +1,39 @@
 #include <arch/mcxa153/fault.h>
 #include <kernel/panic.h>
-
+#include <arch/mcxa153/MCXA153.h>
 
 
 void NMI_handler()
 {
-    panic("NMI Interrupt!");
+    GPIO3->PTOR = 1 << 13;
 }
 
 void hardfault_handler()
 {
-    panic("HardFault exception!");
+    GPIO3->PTOR = 1 << 13;
 }
 
 void MPUfault_handler()
 {
-    panic("MPUFault exception");
+    GPIO3->PTOR = 1 << 13;
 }
 
 void busfault_handler()
 {
-    panic("BusFault exception!");
+    GPIO3->PTOR = 1 << 13;
 }
 
 void usagefault_handler()
 {
-    
+    GPIO3->PTOR = 1 << 13;
 }
 
 void securefault_handler()
 {
-
+    //GPIO3->PTOR ^= 1 << 13;
 }
 
 void pendsv_handler()
-{
-
-}
-
-void systick_handler()
 {
 
 }

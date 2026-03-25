@@ -1,39 +1,55 @@
 #include <arch/mcxa153/interrupt.h>
 #include <arch/mcxa153/fault.h>
 #include <arch/mcxa153/MCXA153.h>
+#include <lib/stdlib.h>
 #include <stddef.h>
 
-#define VECTOR_TABLE_SIZE 128
-[[gnu::aligned(128)]] void (*vector_table[VECTOR_TABLE_SIZE])(void);
+
+[[gnu::aligned(512)]] uint32_t vector_table[VECTOR_TABLE_SIZE];
+
+struct device* interrupt_registry[VECTOR_TABLE_SIZE];
 
 void interrupt_init()
 {
-    vector_table[0] = reset_handler;
-    vector_table[15 + NonMaskableInt_IRQn] = NMI_handler;
-    vector_table[15 + HardFault_IRQn] = hardfault_handler;
-    vector_table[15 + MemoryManagement_IRQn] = MPUfault_handler;
-    vector_table[15 + BusFault_IRQn] = busfault_handler;
-    vector_table[15 + UsageFault_IRQn] = usagefault_handler;
-    vector_table[15 + SecureFault_IRQn] = securefault_handler;
+    memcpy(vector_table, __Vectors, 16*4); //copy the core interrupts to the new table
+    //memset(vector_table, 0, sizeof(vector_table));
+    memset(interrupt_registry, 0, sizeof(interrupt_registry));
+    __DSB();
+
     SCB->VTOR = (uint32_t) &vector_table;
+    
+    __DSB();
+    __ISB();
 }
 
-int register_interrupt(uint8_t ivec, void (*handler)(void))
+int register_interrupt(int ivec, struct device* dev, void (*handler)(void))
 {
-    if ((15 + ivec) > VECTOR_TABLE_SIZE) {
+    if ((16 + ivec) >= VECTOR_TABLE_SIZE) {
         return -1;
     }
-    if (vector_table[15 + ivec]) {
+    if (vector_table[16 + ivec]) {
         return -1; //interrupt vector already assigned
     }
-    vector_table[15 + ivec] = handler;
+    vector_table[16 + ivec] = (uint32_t) handler;
+    __DSB();
+    __ISB();
+
+    interrupt_registry[16 + ivec] = dev;
     return 0;
 }
 
-void set_interrupt_priority(uint8_t ivec, uint8_t priority)
+void set_interrupt_priority(int ivec, int priority)
 {
     NVIC_SetPriority(ivec, priority);
 }
 
+int get_current_interrupt()
+{
+    return __get_IPSR() - 16;
+}
+
+struct device* get_current_device() {
+    return interrupt_registry[__get_IPSR()];
+}
 
 
