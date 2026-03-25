@@ -1,9 +1,9 @@
 #pragma once
 #include <stdint.h>
 #include <uapi/proc.h>
+#include <kernel/settings.h>
 #include <kernel/device.h>
 #include <fs/vfs.h>
-
 
 typedef struct {
     uint8_t target_pid;
@@ -45,11 +45,20 @@ typedef struct {
 #define PROC_MAXFILES 16
 #define PROC_FILE_NIL 255
 
-//this should be made cross platform but i dont care anymore
+
 struct proc {
+    
+#ifdef ARCH_MCXA153
+    uint32_t saved_regs[13];
+    uint32_t user_sp;
+    uint32_t link_register;
+    uint32_t return_address;
+#elif ARCH_TAURUS
     uint32_t return_address;
     uint32_t user_sp;
     uint32_t saved_regs[12];
+#endif
+
     uint32_t return_value;
     enum proc_state state;
 
@@ -83,6 +92,9 @@ struct proc {
 #define MAX_PROCESSES 4
 #define MAX_PROCESSES_MSK (MAX_PROCESSES - 1)
 extern struct proc process_table[MAX_PROCESSES];
+extern uint8_t free_processes[MAX_PROCESSES];
+extern uint8_t free_processes_count;
+
 
 //0 - 1 is blocked or ready, and 2 - 3 is dead or unallocated so if we check bit 0b10 we know if the process is alive or dead
 #define PROC_ALIVE(PID) ((process_table[PID & MAX_PROCESSES_MSK].state & 0b10) == 0)
