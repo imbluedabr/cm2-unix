@@ -8,7 +8,7 @@
 #include <kernel/exec.h>
 #include <kernel/syscall.h>
 #include <kernel/panic.h>
-#include <kernel/globals.h>
+#include <kernel/uname.h>
 #include <kernel/settings.h>
 
 #include <fs/romfs.h>
@@ -78,7 +78,7 @@ void main() {
     
     devtbl_init(devconfig, 3);
     console = device_lookup(MKDEV(USART_MAJOR, 0));
-    kputs(uname);
+    kputs(uname.sysname); kputc(' '); kputs(uname.release); kputc('\n');
    
 #ifdef FS_ROMFS
     register_filesystem("romfs", (struct super_ops*) &romfs_sops);

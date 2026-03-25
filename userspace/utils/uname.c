@@ -1,12 +1,13 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <uname.h>
 
 int main(const char** argv)
 {
-    char uname[48];
-    sysctl(1, uname, 48);
+    struct utsname buff;
+    sysctl(1, &buff, 0);
     
-    puts(uname);
+    printf("%s %s %s %s\n", buff.sysname, buff.release, buff.version, buff.machine);
 
     return 0;
 }

@@ -48,12 +48,12 @@ typedef struct {
 
 struct proc {
     
-#ifdef ARCH_MCXA153
+#if defined (ARCH_MCXA153)
     uint32_t saved_regs[13];
     uint32_t user_sp;
     uint32_t link_register;
     uint32_t return_address;
-#elif ARCH_TAURUS
+#elif defined (ARCH_TAURUS)
     uint32_t return_address;
     uint32_t user_sp;
     uint32_t saved_regs[12];
