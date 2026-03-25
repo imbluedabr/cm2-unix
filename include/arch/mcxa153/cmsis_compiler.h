@@ -26,31 +26,10 @@
 #include <stdint.h>
 
 /*
- * Arm Compiler above 6.10.1 (armclang)
- */
-#if defined (__ARMCC_VERSION) && (__ARMCC_VERSION >= 6100100)
-  #include "cmsis_armclang.h"
-
-/*
- * TI Arm Clang Compiler (tiarmclang)
- */
-#elif defined (__ti__)
-  #include "cmsis_tiarmclang.h"
-
-
-/*
- * LLVM/Clang Compiler
- */
-#elif defined ( __clang__ )
-  #include "cmsis_clang.h"
-
-
-/*
  * GNU Compiler
  */
-#elif defined ( __GNUC__ )
+#if defined ( __GNUC__ )
   #include "cmsis_gcc.h"
-
 
 /*
  * IAR Compiler
