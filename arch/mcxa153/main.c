@@ -1,48 +1,24 @@
+#include <stddef.h>
 #include <arch/mcxa153/MCXA153.h>
 #include <arch/mcxa153/PERI_LPUART.h>
 #include <arch/mcxa153/interrupt.h>
 
 #include <uapi/majors.h>
+#include <uapi/tty.h>
+#include <uapi/ST7920.h>
 #include <lib/kprint.h>
+#include <lib/stdlib.h>
 #include <kernel/device.h>
 #include <kernel/devtbl.h>
 #include <kernel/proc.h>
+#include <kernel/uname.h>
+#include <kernel/settings.h>
 #include <fs/fs.h>
 #include <fs/devfs.h>
 
+#include <drivers/tty.h>
 #include <drivers/usart.h>
-
-void uart0_init(int baudrate)
-{
-    MRCC0->MRCC_LPUART0_CLKSEL = MRCC_MRCC_LPUART0_CLKSEL_MUX(2);
-    MRCC0->MRCC_LPUART0_CLKDIV = 0;
-
-    MRCC0->MRCC_GLB_CC0_SET = MRCC_MRCC_GLB_CC0_LPUART0(1);
-    MRCC0->MRCC_GLB_CC0_SET = MRCC_MRCC_GLB_CC0_PORT0(1);
-
-    MRCC0->MRCC_GLB_RST0_SET = MRCC_MRCC_GLB_CC0_LPUART0(1);
-    MRCC0->MRCC_GLB_RST0_SET = MRCC_MRCC_GLB_CC0_PORT0(1);
-
-    PORT0->PCR[2] = PORT_PCR_LK(1) | PORT_PCR_MUX(2) | PORT_PCR_IBE(1);
-    PORT0->PCR[3] = PORT_PCR_LK(1) | PORT_PCR_MUX(2);
-    
-    LPUART0->BAUD = LPUART_BAUD_OSR(0b01111) | LPUART_BAUD_SBR(CLK_FRO_48MHZ / (baudrate * 16));
-    LPUART0->CTRL |= LPUART_CTRL_TE(1) | LPUART_CTRL_RE(1);
-}
-
-void uart0_putc(char c)
-{
-    while(!(LPUART0->STAT & LPUART_STAT_TDRE_MASK));
-    
-    LPUART0->DATA = c;
-}
-
-void uart0_puts(const char* str)
-{
-    while(*str != '\0') {
-        uart0_putc(*str++);
-    }
-}
+#include <drivers/ST7920.h>
 
 void gpio_output_init(void)
 {
@@ -122,47 +98,72 @@ void init_cpu()
 
 }
 
+static volatile uint32_t ticks = 0;
+
+void systick_handler()
+{
+    device_update();
+    ticks++;
+}
+
 void main()
 {
     init_cpu();
-    //interrupt_init();
+    interrupt_init();
     device_init();
     proc_init();
     fs_init();
     devfs_init();
-    
 
+    gpio_output_init();
+   
 #ifdef USART_DRIVER
     usart_init();
 #endif
 #ifdef TTY_DRIVER
     tty_init();
 #endif
+#ifdef ST7920_DRIVER
+    st7920_init();
+#endif
+
+    SysTick_Config(48000);
     
-    device_node_t table[] = {
+    register_interrupt(SysTick_IRQn, NULL, systick_handler);
+    
+    device_node_t device_table[] = {
         {
             .major = USART_MAJOR,
             .arg = &(struct usart_desc) {
                 .base = LPUART0,
-                .device_id = 0,
-                .baudrate = 9600
+                .device_id = 1,
+                .baudrate = 9600,
+                .irq = LPUART0_IRQn
             }
+        },
+        {
+            .major = ST7920_MAJOR
         }
     };
 
-    devtbl_init(table, 1);
+    devtbl_init(device_table, 2);
 
-    console = device_lookup(MKDEV(USART_MAJOR, 0));
+    __enable_irq();
+    console = device_lookup(MKDEV(ST7920_MAJOR, 0));
     
-    uart0_init(9600);
+    //struct device* display = device_lookup(MKDEV(ST7920_MAJOR, 0));
+    kputs(uname.sysname);
+    kputc(' ');
+    kputs(uname.release);
+    kputc(' ');
+    kputs(uname.version);
+    kputc(' ');
+    kputs(uname.machine);
     while(1) {
-
-        uart0_puts("Hello world!\r\n");
-        //kputs("Hello world!\r\n");
-        for (volatile int i = 0; i < 0x200000; i++) {
-            device_update();
-        };
-
+        if (ticks > 1000) {
+            ticks = 0;
+            GPIO3->PTOR = (1 << 13);
+        }
     }
 }
 
