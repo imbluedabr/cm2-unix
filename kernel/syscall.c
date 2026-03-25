@@ -1,9 +1,10 @@
-#include <kernel/globals.h>
 #include <kernel/syscall.h>
 #include <kernel/device.h>
 #include <kernel/panic.h>
 #include <kernel/proc.h>
 #include <kernel/exec.h>
+#include <kernel/uname.h>
+#include <kernel/settings.h>
 #include <lib/kprint.h>
 #include <lib/stdlib.h>
 #include <lib/alloc.h>
@@ -368,7 +369,7 @@ void sys_sysctl()
 {
     int cmd = syscall_args[1];
     void* buff = (void*) syscall_args[2];
-    int count = syscall_args[3];
+    //int count = syscall_args[3];
     if (cmd == 0) {
         int count = 0;
         for (int i = 0; i < MAX_PROCESSES; i++) {
@@ -383,8 +384,7 @@ void sys_sysctl()
         }
         current_process->return_value = count;
     } else if (cmd == 1) {
-        char* ubuff = buff;
-        strlcpy(ubuff, (char*) uname, count - 1);
+        memcpy(buff, (void*) &uname, sizeof(struct utsname));
         current_process->return_value = 0;
     } else if (cmd == 2) {
         struct istat* ibuff = (struct istat*) syscall_args[2];
@@ -432,8 +432,11 @@ void process_syscall()
     } else {
         //bad syscall
     }
+
+#ifdef ARCH_TAURUS
     //schedule new thread
     proc_update();
+#endif
 
 }
 
