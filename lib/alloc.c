@@ -1,7 +1,6 @@
-#include <stddef.h>
-#include <stdint.h>
-#include <stdbool.h>
 #include <lib/stdlib.h>
+#include <stddef.h>
+#include <stdbool.h>
 
 #define MAX_ALLOCATIONS 8
 

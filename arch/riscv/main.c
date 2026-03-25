@@ -1,13 +1,8 @@
 #include <lib/kprint.h>
 #include <lib/stdlib.h>
+#include <lib/alloc.h>
 
 #include <kernel/device.h>
-#include <drivers/usart.h>
-#include <uapi/tty.h>
-#include <drivers/tty.h>
-#include <drivers/cm2disk.h>
-#include <drivers/tilegpu.h>
-#include <uapi/majors.h>
 #include <kernel/devtbl.h>
 #include <kernel/proc.h>
 #include <kernel/exec.h>
@@ -19,6 +14,13 @@
 #include <fs/romfs.h>
 #include <fs/devfs.h>
 #include <fs/fatfs.h>
+
+#include <uapi/tty.h>
+#include <uapi/majors.h>
+#include <drivers/usart.h>
+#include <drivers/tty.h>
+#include <drivers/cm2disk.h>
+#include <drivers/tilegpu.h>
 
 void main() {
     
@@ -53,8 +55,9 @@ void main() {
             }
         }
     };
-        
+    
     //initialize functions
+    heap_init((uint8_t*) 0x6000);
     device_init();
     proc_init();
     fs_init();
@@ -74,19 +77,7 @@ void main() {
 #endif
     
     devtbl_init(devconfig, 3);
-
-/*
-    tilegpu_init();
-    device_create(&gpu0_devno, TILEGPU_MAJOR, &(struct tilegpu_hw_interface){
-        .controls = TILEGPU_CONTROLS,
-        .fx_imm = TILEGPU_FX_IMM,
-        .fx_opcode = TILEGPU_FX_OPCODE,
-        .tile_id = TILEGPU_ADDR,
-        .y = TILEGPU_Y,
-        .x = TILEGPU_X
-    });
-*/
-
+    console = device_lookup(MKDEV(USART_MAJOR, 0));
     kputs(uname);
    
 #ifdef FS_ROMFS
