@@ -49,7 +49,7 @@ int device_queue_action(struct device* dev, struct device_request* req);
 //this is only for internal driver use
 struct device_request* device_queue_pop(struct device* dev);
 
-#define DEVICE_DRIVER_MAX 4
+#define DEVICE_DRIVER_MAX 6
 extern struct device_driver driver_registry[DEVICE_DRIVER_MAX];
 #define DEVICE_REQ_TBL_LEN 6
 
