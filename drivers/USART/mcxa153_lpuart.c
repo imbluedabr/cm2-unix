@@ -2,10 +2,37 @@
 #include <stddef.h>
 #include <arch/mcxa153/MCXA153.h>
 #include <arch/mcxa153/PERI_LPUART.h>
+#include <arch/mcxa153/interrupt.h>
 #include <drivers/usart.h>
 
-void mcxa153_lpuart_init(int baudrate)
+
+void mcxa153_lpuart_IRQHandler()
 {
+    struct usart_device* usart = (struct usart_device*) get_current_device();
+
+    volatile LPUART_Type* lpuart = usart->usart_base;
+    GPIO3->PTOR = 1 << 13;
+    
+    if (usart->tx_tail != usart->tx_head) {
+        uint8_t tmp = (usart->tx_tail + 1) & 15;
+        usart->tx_tail = tmp;
+        lpuart->DATA = usart->tx_buff[tmp];
+    } else {
+        lpuart->CTRL &= ~LPUART_CTRL_TIE_MASK;
+    }
+    char c = lpuart->DATA;
+    uint8_t tmp = (usart->rx_head + 1) & 15;
+    if (usart->rx_tail != usart->rx_head) {
+        usart->rx_buff[tmp] = c;
+        usart->rx_head = tmp;
+    }
+
+    NVIC_ClearPendingIRQ(get_current_interrupt());
+}
+
+void mcxa153_lpuart_init(struct device* dev, struct usart_desc* desc)
+{
+    volatile LPUART_Type* lpuart = desc->base;
     MRCC0->MRCC_LPUART0_CLKSEL = MRCC_MRCC_LPUART0_CLKSEL_MUX(2);
     MRCC0->MRCC_LPUART0_CLKDIV = 0;
 
@@ -18,24 +45,22 @@ void mcxa153_lpuart_init(int baudrate)
     PORT0->PCR[2] = PORT_PCR_LK(1) | PORT_PCR_MUX(2) | PORT_PCR_IBE(1);
     PORT0->PCR[3] = PORT_PCR_LK(1) | PORT_PCR_MUX(2);
     
-    LPUART0->BAUD = LPUART_BAUD_OSR(0b01111) | LPUART_BAUD_SBR(CLK_FRO_48MHZ / (baudrate * 16));
-    LPUART0->CTRL |= LPUART_CTRL_TE(1) | LPUART_CTRL_RE(1);
+    register_interrupt(desc->irq, dev, mcxa153_lpuart_IRQHandler);
+    NVIC_SetPriority(desc->irq, 3);
+    NVIC_ClearPendingIRQ(desc->irq);
+    NVIC_EnableIRQ(desc->irq);
+
+    lpuart->BAUD = LPUART_BAUD_OSR(0b01111) | LPUART_BAUD_SBR(CLK_FRO_48MHZ / (desc->baudrate * 16));
+    lpuart->CTRL |= LPUART_CTRL_TE_MASK | LPUART_CTRL_RE_MASK | LPUART_CTRL_RIE_MASK;
 }
-
-void uart0_putc(char c)
-{
-    while(!(LPUART0->STAT & LPUART_STAT_TDRE_MASK));
-
-    LPUART0->DATA = c;
-}
-
 
 int mcxa_lpuart_ioctl(struct device* dev, int cmd, void* arg)
 {
     if (cmd == IOCTL_RESET) {
         struct usart_desc* desc = arg;
-        mcxa153_lpuart_init(desc->baudrate);
+        mcxa153_lpuart_init(dev, desc);
     }
+    return 0;
 }
 
 int mcxa_lpuart_readb(struct device* dev)
@@ -62,6 +87,8 @@ int mcxa_lpuart_writeb(struct device* dev, uint8_t val)
     }
     usart->tx_head = tmp;
     usart->tx_buff[tmp] = val;
+    volatile LPUART_Type* lpuart = usart->usart_base;
+    lpuart->CTRL |= LPUART_CTRL_TIE_MASK;
     return 0;
 }
 
@@ -88,6 +115,16 @@ void mcxa_lpuart_update(struct device* dev)
 {
     struct usart_device* usart = (struct usart_device*) dev;
     struct device_request* current_req = usart->current_req;
+    /*
+    volatile LPUART_Type* lpuart = usart->usart_base;
+    if (lpuart->STAT & LPUART_STAT_TDRE_MASK) {
+        if (usart->tx_head != usart->tx_tail) {
+            uint8_t tmp = (usart->tx_tail + 1) & 15;
+            usart->tx_tail = tmp;
+            lpuart->DATA = usart->tx_buff[tmp];
+        }
+    }*/
+
 
     if (current_req == NULL) {
         current_req = device_queue_pop(dev);
@@ -109,15 +146,6 @@ void mcxa_lpuart_update(struct device* dev)
         current_req->state = DEVICE_STATE_FINISHED;
         current_req->count = usart->bytes_copied;
         usart->current_req = NULL;
-    }
-
-    LPUART_Type* lpuart = usart->usart_base;
-    if (lpuart->STAT & LPUART_STAT_TDRE_MASK) {
-        if (usart->tx_head != usart->tx_tail) {
-            uint8_t tmp = (usart->tx_tail + 1) & 15;
-            usart->tx_tail = tmp;
-            lpuart->DATA = usart->tx_buff[tmp];
-        }
     }
 }
 
