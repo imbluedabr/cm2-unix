@@ -1,5 +1,0 @@
-
-
-extern const void* uname;
-
-
