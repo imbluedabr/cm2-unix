@@ -4,30 +4,29 @@
 #include <kernel/device.h>
 #include <uapi/majors.h>
 #include <drivers/usart.h>
+#include <kernel/settings.h>
 #include "cm2_con.h"
 #include "mcxa153_lpuart.h"
 
-//this is the table that stores the tty instances
-#define MAX_USART_COUNT 2
-#define MAX_USART_MSK (MAX_USART_COUNT-1)
+//this is the table that stores the usart instances
 struct usart_device usart_table[MAX_USART_COUNT];
 
 const struct device_ops usart_backends[] = {
 #ifdef USART_DRIVER_CM2CON
-    {
+    [0] = {
         .readb = &cm2con_readb,
         .writeb = &cm2con_writeb,
         .ioctl = &cm2con_ioctl,
         .update = &cm2con_update
-    }
+    },
 #endif
 #ifdef USART_DRIVER_MCXA
-    {
+    [1] = {
         .readb = &mcxa_lpuart_readb,
         .writeb = &mcxa_lpuart_writeb,
         .ioctl = &mcxa_lpuart_ioctl,
         .update = &mcxa_lpuart_update
-    }
+    },
 #endif
 };
 

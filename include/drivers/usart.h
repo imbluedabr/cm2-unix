@@ -22,6 +22,12 @@ struct usart_device {
     uint8_t tx_tail;
 };
 
+//this is the table that stores the tty instances
+#define MAX_USART_COUNT 2
+#define MAX_USART_MSK (MAX_USART_COUNT-1)
+extern struct usart_device usart_table[MAX_USART_COUNT];
+
+
 void usart_init();
 struct device* usart_create(int8_t* minor, const void* args);
 int usart_destroy(uint8_t minor);
