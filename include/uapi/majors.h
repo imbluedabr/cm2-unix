@@ -6,6 +6,6 @@
 #define USART_MAJOR 1
 #define GEN_DISK_MAJOR 2
 #define TILEGPU_MAJOR 3
-
+#define ST7920_MAJOR 4
 
 
