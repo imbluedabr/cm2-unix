@@ -1,3 +1,5 @@
+> [!NOTE]
+> Develpoment of this repository has ended but a new project in brewing up will eventually replace this.
 
 # CM2-UNIX
 
